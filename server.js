@@ -1,5 +1,44 @@
 "use strict";
 
+require("dotenv").config(); // Wczytuje zmienne z pliku .env
+const express = require("express");
+const session = require("express-session");
+const bcrypt = require("bcryptjs");
+const path = require("path");
+const mongoose = require("mongoose");
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// POŁĄCZENIE Z BAZĄ MONGO DB
+const MONGO_URI = process.env.MONGO_URI;
+
+if (MONGO_URI) {
+    mongoose.connect(MONGO_URI)
+    .then(() => console.log("🟢 Połączono pomyślnie z bazą danych MongoDB Atlas!"))
+    .catch(err => console.error("🔴 Błąd połączenia z MongoDB:", err));
+} else {
+    console.warn("⚠️ Brak MONGO_URI w pliku .env!");
+}
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'super-tajny-klucz-fossspec',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false, maxAge: 1000 * 60 * 60 * 24 }
+}));
+
+app.use(express.static(path.join(__dirname, "public")));
+
+// Uruchomienie serwera
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Foss Spec działa na porcie ${PORT}`);
+});
+"use strict";
+
 const express = require("express");
 const session = require("express-session");
 const bcrypt = require("bcryptjs");

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wątek - Forum FossSpec</title>
+    <style>
+        * { box-sizing: border-box; font-family: sans-serif; }
+        body { background: #121212; color: #fff; margin: 0; padding: 0; }
+        header { background: #1e1e1e; padding: 1rem 2rem; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        h1 { color: #4CAF50; margin: 0; font-size: 1.5rem; }
+        .btn { padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; border: none; cursor: pointer; font-weight: bold; }
+        .btn-green { background: #4CAF50; color: white; }
+        .btn-gray { background: #333; color: white; }
+        
+        main { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: #1e1e1e; padding: 1.5rem; border-radius: 8px; border: 1px solid #333; margin-bottom: 1.5rem; }
+        .badge { background: #2e7d32; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; }
+        .reply-box { background: #252525; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; border-left: 3px solid #4CAF50; }
+        textarea { width: 100%; padding: 0.8rem; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 4px; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>💬 Forum FossSpec</h1>
+    <a href="/" class="btn btn-gray">← Powrót do Forum</a>
+</header>
+
+<main>
+    <div id="threadContent" class="card">
+        <p>Ładowanie wątku...</p>
+    </div>
+
+    <h3 style="color: #4CAF50;">Odpowiedzi i Komentarze</h3>
+    <div id="repliesContainer"></div>
+
+    <div id="replyFormCard" class="card">
+        <h4>Dodaj odpowiedź</h4>
+        <form id="replyForm">
+            <textarea id="replyContent" rows="3" placeholder="Napisz odpowiedź..." required></textarea>
+            <button type="submit" class="btn btn-green">Wyślij Odpowiedź</button>
+        </form>
+    </div>
+</main>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const threadId = urlParams.get('id');
+    let currentUser = null;
+
+    async function init() {
+        const meRes = await fetch('/api/me');
+        const meData = await meRes.json();
+        currentUser = meData.loggedIn ? meData.user : null;
+
+        if (!currentUser) {
+            document.getElementById('replyFormCard').innerHTML = '<p style="color:#888;">Musisz być <a href="/login.html" style="color:#4CAF50">zalogowany</a>, aby dodać odpowiedź.</p>';
+        }
+
+        loadThread();
+    }
+
+    async function loadThread() {
+        const res = await fetch('/api/threads/' + threadId);
+        if (!res.ok) {
+            document.getElementById('threadContent').innerHTML = '<p style="color:#ff5252">Wątek nie istnieje.</p>';
+            return;
+        }
+
+        const data = await res.json();
+        const thread = data.thread;
+        const replies = data.replies;
+
+        document.getElementById('threadContent').innerHTML = `
+            <div>
+                <span class="badge">${thread.category}</span>
+                <h2 style="margin: 0.5rem 0; color: #fff;">${thread.title}</h2>
+                <small style="color: #888;">Autor: <strong>${thread.author}</strong> | Data: ${new Date(thread.createdAt).toLocaleString('pl-PL')}</small>
+                <div style="margin-top: 1.5rem; line-height: 1.6; white-space: pre-wrap; font-size: 1.05rem;">${thread.content}</div>
+            </div>
+        `;
+
+        const repliesContainer = document.getElementById('repliesContainer');
+        if (replies.length === 0) {
+            repliesContainer.innerHTML = '<p style="color:#888;">Brak odpowiedzi. Bądź pierwszy!</p>';
+        } else {
+            repliesContainer.innerHTML = replies.map(r => `
+                <div class="reply-box">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                        <strong style="color:#4CAF50">${r.author}</strong>
+                        <small style="color:#888">${new Date(r.createdAt).toLocaleString('pl-PL')}</small>
+                    </div>
+                    <div style="white-space: pre-wrap;">${r.content}</div>
+                </div>
+            `).join('');
+        }
+    }
+
+    document.getElementById('replyForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const content = document.getElementById('replyContent').value;
+
+        const res = await fetch(`/api/threads/${threadId}/replies`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content })
+        });
+
+        if (res.ok) {
+            document.getElementById('replyContent').value = '';
+            loadThread();
+        } else {
+            alert('Błąd podczas wysyłania odpowiedzi!');
+        }
+    });
+
+    init();
+</script>
+
+</body>
+</html>

@@ -3,59 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FossSpec - Strona Główna</title>
+    <title>FossSpec - Forum Kanału</title>
     <style>
         * { box-sizing: border-box; font-family: sans-serif; }
-        body { background: #121212; color: #fff; margin: 0; padding: 2rem; }
-        header { max-width: 900px; margin: 0 auto 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 1rem; }
-        h1 { color: #4CAF50; margin: 0; }
-        .grid { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-        .card { background: #1e1e1e; padding: 1.5rem; border-radius: 8px; border: 1px solid #333; }
-        .badge { background: #2e7d32; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; }
-        footer { max-width: 900px; margin: 3rem auto 0; text-align: center; border-top: 1px solid #333; padding-top: 1rem; color: #666; }
-        a { color: #888; text-decoration: none; }
-        a:hover { color: #4CAF50; }
+        body { background: #121212; color: #fff; margin: 0; padding: 0; }
+        header { background: #1e1e1e; padding: 1rem 2rem; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        h1 { color: #4CAF50; margin: 0; font-size: 1.6rem; }
+        .user-bar { display: flex; gap: 10px; align-items: center; }
+        .btn { padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; border: none; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+        .btn-green { background: #4CAF50; color: white; }
+        .btn-green:hover { background: #45a049; }
+        .btn-gray { background: #333; color: white; }
+        .btn-gray:hover { background: #444; }
+        .btn-danger { background: #ff5252; color: white; }
+        
+        main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: #1e1e1e; padding: 1.5rem; border-radius: 8px; border: 1px solid #333; margin-bottom: 1.5rem; }
+        .thread-row { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #333; cursor: pointer; }
+        .thread-row:hover { background: #252525; }
+        .badge { background: #2e7d32; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; margin-right: 0.5rem; }
+        .thread-title { color: #fff; text-decoration: none; font-size: 1.1rem; font-weight: bold; }
+        .thread-title:hover { color: #4CAF50; }
+        .meta { color: #888; font-size: 0.85rem; margin-top: 0.3rem; }
+        
+        /* Modal tworzenia wątku */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #1e1e1e; padding: 2rem; border-radius: 8px; width: 100%; max-width: 500px; border: 1px solid #333; }
+        input, select, textarea { width: 100%; padding: 0.8rem; margin-bottom: 1rem; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>FossSpec</h1>
-    <p>Specyfikacje i Projekt FOSS</p>
+    <h1>💬 Forum FossSpec</h1>
+    <div id="userBar" class="user-bar">
+        <span>Ładowanie...</span>
+    </div>
 </header>
 
 <main>
-    <div id="itemsContainer" class="grid">
-        <p>Ładowanie wpisów...</p>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="margin: 0;">Dyskusje i Tematy</h2>
+        <button id="newThreadBtn" class="btn btn-green" onclick="openModal()">+ Załóż Nowy Wątek</button>
+    </div>
+
+    <div id="threadsContainer" class="card" style="padding: 0;">
+        <p style="padding: 1.5rem; color: #888; margin: 0;">Ładowanie wątków...</p>
     </div>
 </main>
 
-<footer>
-    <p>© 2026 FossSpec | <a href="/login.html">Panel Admina</a></p>
-</footer>
+<!-- Okienko tworzenia nowego wątku -->
+<div id="threadModal" class="modal">
+    <div class="modal-content">
+        <h2 style="margin-top: 0; color: #4CAF50;">Stwórz Nowy Wątek</h2>
+        <form id="createThreadForm">
+            <input type="text" id="title" placeholder="Tytuł wątku" required>
+            <select id="category" required>
+                <option value="📢 Ogłoszenia">📢 Ogłoszenia</option>
+                <option value="💻 Hardware">💻 Hardware / Sprzęt</option>
+                <option value="🐧 Software & FOSS">🐧 Software & FOSS</option>
+                <option value="💬 Ogólne & Pomoc" selected>💬 Ogólne & Pomoc</option>
+            </select>
+            <textarea id="content" rows="5" placeholder="Treść wątku / Pytanie..." required></textarea>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn btn-gray" onclick="closeModal()">Anuluj</button>
+                <button type="submit" class="btn btn-green">Opublikuj</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <script>
-    async function loadPublicItems() {
-        const res = await fetch('/api/items');
-        const items = await res.json();
-        const container = document.getElementById('itemsContainer');
+    let currentUser = null;
 
-        if (items.length === 0) {
-            container.innerHTML = '<p style="color: #888; grid-column: 1/-1;">Brak dodanych specyfikacji. Zaloguj się do panelu admina, aby dodać pierwsze wpisy!</p>';
+    async function checkUser() {
+        const res = await fetch('/api/me');
+        const data = await res.json();
+        const userBar = document.getElementById('userBar');
+
+        if (data.loggedIn) {
+            currentUser = data.user;
+            userBar.innerHTML = `
+                <span style="font-size:0.9rem;">Witaj, <strong>${data.user.username}</strong> ${data.user.role === 'admin' ? '<span style="color:#4CAF50">(Admin)</span>' : ''}</span>
+                <button onclick="logout()" class="btn btn-danger">Wyloguj</button>
+            `;
+        } else {
+            userBar.innerHTML = `
+                <a href="/login.html" class="btn btn-gray">Zaloguj</a>
+                <a href="/register.html" class="btn btn-green">Zarejestruj</a>
+            `;
+        }
+        loadThreads();
+    }
+
+    async function loadThreads() {
+        const res = await fetch('/api/threads');
+        const threads = await res.json();
+        const container = document.getElementById('threadsContainer');
+
+        if (threads.length === 0) {
+            container.innerHTML = '<p style="padding: 1.5rem; color: #888; margin: 0;">Brak wątków na forum. Bądź pierwszy i załóż nowy wątek!</p>';
             return;
         }
 
-        container.innerHTML = items.map(item => `
-            <div class="card">
-                <span class="badge">${item.category}</span>
-                <h3 style="margin: 0.8rem 0 0.4rem;">${item.title}</h3>
-                <small style="color: #777;">Dodano: ${item.date}</small>
-                <p style="color: #ccc; margin-top: 1rem;">${item.description}</p>
+        container.innerHTML = threads.map(t => `
+            <div class="thread-row" onclick="window.location.href='/thread.html?id=${t._id}'">
+                <div>
+                    <div>
+                        <span class="badge">${t.category}</span>
+                        <a href="/thread.html?id=${t._id}" class="thread-title">${t.title}</a>
+                    </div>
+                    <div class="meta">Autor: <strong>${t.author}</strong> | Data: ${new Date(t.createdAt).toLocaleDateString('pl-PL')} ${new Date(t.createdAt).toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})}</div>
+                </div>
+                <div style="color: #4CAF50; font-weight: bold;">➔</div>
             </div>
         `).join('');
     }
 
-    loadPublicItems();
+    function openModal() {
+        if (!currentUser) {
+            alert('Musisz być zalogowany, aby stworzyć wątek!');
+            window.location.href = '/login.html';
+            return;
+        }
+        document.getElementById('threadModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('threadModal').style.display = 'none';
+    }
+
+    document.getElementById('createThreadForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('title').value;
+        const category = document.getElementById('category').value;
+        const content = document.getElementById('content').value;
+
+        const res = await fetch('/api/threads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, category, content })
+        });
+
+        if (res.ok) {
+            closeModal();
+            document.getElementById('createThreadForm').reset();
+            loadThreads();
+        } else {
+            alert('Błąd podczas dodawania wątku!');
+        }
+    });
+
+    async function logout() {
+        await fetch('/api/logout');
+        window.location.reload();
+    }
+
+    checkUser();
 </script>
 
 </body>
