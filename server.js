@@ -22,7 +22,15 @@ if (MONGO_URI) {
 }
 
 // 2. SCHEMATY BAZY DANYCH (MODELE MONGOOSE)
-
+const userSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
+    password: { type: String, required: true },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    isVerified: { type: Boolean, default: false }, // Czy email zweryfikowany
+    verifyCode: { type: String },                  // Losowy kod weryfikacyjny
+    createdAt: { type: Date, default: Date.now }
+});
 // Użytkownicy
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true, trim: true },
