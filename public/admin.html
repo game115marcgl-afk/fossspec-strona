@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FossSpec - Panel Administratora</title>
+    <style>
+        * { box-sizing: border-box; font-family: sans-serif; }
+        body { background: #121212; color: #fff; margin: 0; padding: 0; }
+        header { background: #1e1e1e; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        h1 { margin: 0; font-size: 1.5rem; color: #4CAF50; }
+        .btn { padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; border: none; cursor: pointer; font-weight: bold; }
+        .btn-logout { background: #ff5252; color: white; }
+        .btn-logout:hover { background: #e04848; }
+        .btn-home { background: #333; color: white; margin-right: 0.5rem; }
+        .btn-home:hover { background: #444; }
+        main { padding: 2rem; max-width: 1000px; margin: 0 auto; }
+        .card { background: #1e1e1e; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #333; }
+        h2 { margin-top: 0; color: #4CAF50; }
+        .status-badge { display: inline-block; padding: 0.3rem 0.8rem; background: #2e7d32; color: white; border-radius: 20px; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Panel Administratora - FossSpec</h1>
+    <div>
+        <a href="/" class="btn btn-home">Zobacz Stronę Główną</a>
+        <button id="logoutBtn" class="btn btn-logout">Wyloguj się</button>
+    </div>
+</header>
+
+<main>
+    <div class="card">
+        <h2>Witaj w panelu administratora!</h2>
+        <p>Jesteś zalogowany jako <span class="status-badge">Administrator</span></p>
+        <p>Stąd będziesz zarządzać specyfikacjami i treściami na stronie.</p>
+    </div>
+
+    <div class="card">
+        <h2>Zarządzanie Danymi</h2>
+        <p>W kolejnym kroku dodamy tutaj formularze do dodawania, edytowania i usuwania wpisów bezpośrednio z tego panelu.</p>
+    </div>
+</main>
+
+<script>
+    // Sprawdzenie czy użytkownik jest zalogowany przy wejściu na stronę
+    async function checkAuth() {
+        const res = await fetch('/api/check-auth');
+        const data = await res.json();
+        
+        if (!data.loggedIn) {
+            // Jeśli użytkownik NIE jest zalogowany, wyrzuć go do formularza logowania
+            window.location.href = '/login.html';
+        }
+    }
+
+    // Obsługa przycisku Wyloguj
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await fetch('/api/logout');
+        window.location.href = '/login.html';
+    });
+
+    // Automatyczny test po załadowaniu
+    checkAuth();
+</script>
+
+</body>
+</html>
