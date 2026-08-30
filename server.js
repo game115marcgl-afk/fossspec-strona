@@ -22,21 +22,15 @@ if (MONGO_URI) {
 }
 
 // 2. SCHEMATY BAZY DANYCH (MODELE MONGOOSE)
+
+// Użytkownicy (zaktualizowany schemat)
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
-    isVerified: { type: Boolean, default: false }, // Czy email zweryfikowany
-    verifyCode: { type: String },                  // Losowy kod weryfikacyjny
-    createdAt: { type: Date, default: Date.now }
-});
-// Użytkownicy
-const userSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true, trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true },
-    password: { type: String, required: true },
-    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    isVerified: { type: Boolean, default: false },
+    verifyCode: { type: String },
     createdAt: { type: Date, default: Date.now }
 });
 const User = mongoose.model("User", userSchema);
@@ -79,12 +73,6 @@ function requireAuth(req, res, next) {
     return res.status(401).json({ success: false, message: "Musisz być zalogowany!" });
 }
 
-// Sprawdzanie czy użytkownik jest Adminem
-function requireAdmin(req, res, next) {
-    if (req.session && req.session.user && req.session.user.role === 'admin') return next();
-    return res.status(403).json({ success: false, message: "Wymagane uprawnienia administratora!" });
-}
-
 // 4. API AUTORYZACJI (REJESTRACJA / LOGOWANIE)
 
 // Rejestracja nowego konta
@@ -107,7 +95,13 @@ app.post("/api/register", async (req, res) => {
         const count = await User.countDocuments();
         const role = count === 0 ? 'admin' : 'user';
 
-        const user = new User({ username, email, password: hashedPassword, role });
+        const user = new User({
+            username,
+            email,
+            password: hashedPassword,
+            role,
+            isVerified: true // Na razie ustawiamy na true, za chwilę dodamy kody e-mail
+        });
         await user.save();
 
         req.session.user = { id: user._id, username: user.username, role: user.role };
@@ -148,9 +142,21 @@ app.get("/api/logout", (req, res) => {
     res.json({ success: true });
 });
 
-// 5. API FORUM (WĄTKI I ODPOWIEDZI)
+// 5. API PANELU ADMINA - LISTA CZŁONKÓW
+app.get("/api/admin/users", requireAuth, async (req, res) => {
+    try {
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ message: "Brak uprawnień!" });
+        }
+        const users = await User.find().select("-password").sort({ createdAt: -1 });
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ message: "Błąd pobierania użytkowników" });
+    }
+});
 
-// Pobranie wszystkich wątków
+// 6. API FORUM (WĄTKI I ODPOWIEDZI)
+
 app.get("/api/threads", async (req, res) => {
     try {
         const threads = await Thread.find().sort({ createdAt: -1 });
@@ -160,7 +166,6 @@ app.get("/api/threads", async (req, res) => {
     }
 });
 
-// Pobranie konkretnego wątku z odpowiedziami
 app.get("/api/threads/:id", async (req, res) => {
     try {
         const thread = await Thread.findById(req.params.id);
@@ -173,7 +178,6 @@ app.get("/api/threads/:id", async (req, res) => {
     }
 });
 
-// Stworzenie nowego wątku (Wymaga zalogowania)
 app.post("/api/threads", requireAuth, async (req, res) => {
     try {
         const { title, category, content } = req.body;
@@ -190,7 +194,6 @@ app.post("/api/threads", requireAuth, async (req, res) => {
     }
 });
 
-// Dodanie odpowiedzi do wątku (Wymaga zalogowania)
 app.post("/api/threads/:id/replies", requireAuth, async (req, res) => {
     try {
         const { content } = req.body;
@@ -206,7 +209,6 @@ app.post("/api/threads/:id/replies", requireAuth, async (req, res) => {
     }
 });
 
-// Usuwanie wątku (Admin lub Autor)
 app.delete("/api/threads/:id", requireAuth, async (req, res) => {
     try {
         const thread = await Thread.findById(req.params.id);
@@ -225,16 +227,4 @@ app.delete("/api/threads/:id", requireAuth, async (req, res) => {
 
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Foss Spec Forum działa na porcie ${PORT}`);
-});
-// Pobranie listy użytkowników (Tylko dla Admina)
-app.get("/api/admin/users", requireAuth, async (req, res) => {
-    try {
-        if (req.session.user.role !== 'admin') {
-            return res.status(403).json({ message: "Brak uprawnień!" });
-        }
-        const users = await User.find().select("-password").sort({ createdAt: -1 });
-        res.json(users);
-    } catch (err) {
-        res.status(500).json({ message: "Błąd pobierania użytkowników" });
-    }
 });
