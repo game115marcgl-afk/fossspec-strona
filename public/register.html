@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FossSpec Forum - Rejestracja</title>
+    <style>
+        * { box-sizing: border-box; font-family: sans-serif; }
+        body { background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #1e1e1e; padding: 2rem; border-radius: 8px; width: 100%; max-width: 380px; border: 1px solid #333; }
+        h2 { color: #4CAF50; margin-top: 0; text-align: center; }
+        input { width: 100%; padding: 0.8rem; margin-bottom: 1rem; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 4px; }
+        button { width: 100%; background: #4CAF50; color: white; border: none; padding: 0.8rem; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #45a049; }
+        .msg { margin-top: 1rem; text-align: center; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Dołącz do Forum FossSpec</h2>
+    <form id="regForm">
+        <input type="text" id="username" placeholder="Twój Nick" required>
+        <input type="email" id="email" placeholder="Adres Email" required>
+        <input type="password" id="password" placeholder="Hasło" required>
+        <button type="submit">Załóż Konto</button>
+        <div id="msg" class="msg"></div>
+    </form>
+    <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: #aaa;">
+        Masz już konto? <a href="/login.html" style="color: #4CAF50;">Zaloguj się</a>
+    </p>
+</div>
+
+<script>
+    document.getElementById('regForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const msg = document.getElementById('msg');
+
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+            msg.style.color = '#4CAF50';
+            msg.textContent = 'Konto utworzone! Przekierowanie...';
+            setTimeout(() => window.location.href = '/', 1000);
+        } else {
+            msg.style.color = '#ff5252';
+            msg.textContent = data.message;
+        }
+    });
+</script>
+
+</body>
+</html>
