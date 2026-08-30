@@ -4,7 +4,9 @@ const express = require("express");
 const path = require("path");
 
 const app = express();
-const PORT = 3000;
+
+// Render przydziela własny port w process.env.PORT
+const PORT = process.env.PORT || 3000;
 
 /*
  * Pozwala Expressowi obsługiwać JSON.
@@ -21,9 +23,10 @@ app.use(express.static(
 
 /*
  * Uruchomienie serwera.
+ * "0.0.0.0" pozwala przyjmować ruch z zewnątrz (z internetu).
  */
-app.listen(PORT, "127.0.0.1", () => {
+app.listen(PORT, "0.0.0.0", () => {
     console.log(
-        `Foss Spec działa pod http://127.0.0.1:${PORT}`
+        `Foss Spec działa na porcie ${PORT}`
     );
 });
