@@ -226,3 +226,15 @@ app.delete("/api/threads/:id", requireAuth, async (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Foss Spec Forum działa na porcie ${PORT}`);
 });
+// Pobranie listy użytkowników (Tylko dla Admina)
+app.get("/api/admin/users", requireAuth, async (req, res) => {
+    try {
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ message: "Brak uprawnień!" });
+        }
+        const users = await User.find().select("-password").sort({ createdAt: -1 });
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ message: "Błąd pobierania użytkowników" });
+    }
+});
