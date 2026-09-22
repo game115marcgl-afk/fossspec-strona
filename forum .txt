@@ -1,3 +1,0 @@
-fossspec_db_user
-4EtxZhgstk4Nh4HA
-mongodb+srv://fossspec_db_user:4EtxZhgstk4Nh4HA@fossspec.bpwcczy.mongodb.net/?appName=Fossspec
