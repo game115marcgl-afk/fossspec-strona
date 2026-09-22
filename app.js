@@ -29,19 +29,18 @@ if (!process.env.SESSION_SECRET) {
 }
 app.use(
     session({
-        proxy: true, // <--- DOPISZ TĘ LINIJKĘ TUTAJ
+        proxy: true,
         secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
         cookie: {
-            secure: process.env.NODE_ENV === "production",
+            secure: false, // <--- Zmień tymczasowo na false, żeby sprawdzić czy to wina szyfrowania ciasteczka za proxy Render
             httpOnly: true,
             sameSite: "lax",
             maxAge: 1000 * 60 * 60 * 24 * 7
         }
     })
 );
-
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
