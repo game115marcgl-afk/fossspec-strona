@@ -3,7 +3,6 @@ const express = require("express");
 const session = require("express-session");
 const path = require("path");
 const helmet = require("helmet");
-const mongoSanitize = require("express-mongo-sanitize");
 const rateLimit = require("express-rate-limit");
 
 const authRoutes = require("./routes/authRoutes");
@@ -18,7 +17,6 @@ app.set("trust proxy", 1);
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(mongoSanitize());
 
 if (!process.env.SESSION_SECRET) {
     throw new Error(
