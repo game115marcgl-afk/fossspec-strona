@@ -27,9 +27,9 @@ if (!process.env.SESSION_SECRET) {
         "Brak SESSION_SECRET w zmiennych środowiskowych! Wygeneruj losowy ciąg znaków i ustaw go w .env."
     );
 }
-
 app.use(
     session({
+        proxy: true, // <--- DOPISZ TĘ LINIJKĘ TUTAJ
         secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
@@ -41,6 +41,7 @@ app.use(
         }
     })
 );
+
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
