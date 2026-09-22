@@ -1,0 +1,24 @@
+{
+  "name": "fossspec",
+  "version": "1.1.0",
+  "description": "Backend forum FossSpec",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^7.4.1",
+    "express-session": "^1.19.0",
+    "helmet": "^8.0.0",
+    "mongoose": "^9.9.4"
+  }
+}
