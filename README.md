@@ -82,10 +82,6 @@ fossspec-backend/
    npm start       # tryb produkcyjny
    ```
 
-5. Aplikacja domyślnie działa pod `http://localhost:3000`.
-
----
-
 ## 🔒 Bezpieczeństwo
 
 - Plik `.env` **nigdy** nie trafia do repozytorium (patrz `.gitignore`).
@@ -97,10 +93,3 @@ fossspec-backend/
 Jeśli znajdziesz lukę bezpieczeństwa, zgłoś ją zgodnie z instrukcją w `SECURITY.md` — nie publikuj jej publicznie w Issues.
 
 ---
-
-## 🗺️ Plan rozwoju
-
-- [ ] Zarządzanie kategoriami z panelu admina
-- [ ] Awatary użytkowników
-- [ ] Statystyki (liczba wątków/odpowiedzi, wyświetlenia)
-- [ ] Weryfikacja e-mail przy rejestracji
