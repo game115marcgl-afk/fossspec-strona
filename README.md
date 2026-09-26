@@ -43,4 +43,3 @@ W pełni funkcjonalne forum społecznościowe skupione wokół technologii Open 
 ## 🔐 Uwagi dotyczące bezpieczeństwa
 - Aplikacja wykorzystuje **Helmet.js** do zabezpieczenia nagłówków HTTP oraz polityki **CSP (Content Security Policy)**.
 - Skrypty JS zostały wydzielone do osobnych plików w `/public/js/`, aby zapewnić zgodność z polityką bezpieczeństwa przeglądarek.
-```
