@@ -1,9 +1,9 @@
+
 "use strict";
 const express = require("express");
 const session = require("express-session");
 const path = require("path");
 const helmet = require("helmet");
-const mongoSanitize = require("express-mongo-sanitize");
 const rateLimit = require("express-rate-limit");
 
 const authRoutes = require("./routes/authRoutes");
@@ -11,6 +11,7 @@ const threadRoutes = require("./routes/threadRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
+const sanitizeBody = require("./middleware/sanitize");
 
 const app = express();
 
@@ -21,9 +22,10 @@ app.use(helmet()); // podstawowe nagłówki bezpieczeństwa (CSP, X-Frame-Option
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Usuwa z req.body / req.query / req.params klucze zaczynające się od "$" lub zawierające ".",
-// czyli druga warstwa ochrony przed NoSQL injection (pierwsza to ensureString w kontrolerach)
-app.use(mongoSanitize());
+// Usuwa z req.body klucze zaczynające się od "$" lub zawierające ".",
+// czyli druga warstwa ochrony przed NoSQL injection (pierwsza to ensureString w kontrolerach).
+// Własna implementacja - express-mongo-sanitize nie działa z Express 5.
+app.use(sanitizeBody);
 
 if (!process.env.SESSION_SECRET) {
     throw new Error(
