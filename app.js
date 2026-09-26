@@ -15,10 +15,9 @@ const sanitizeBody = require("./middleware/sanitize");
 
 const app = express();
 
-// Konfiguracja dla proxy (Render/Heroku)
+// Render wymaga trust proxy dla sesji
 app.set("trust proxy", 1);
 
-// Ulepszona konfiguracja Helmet
 app.use(
     helmet({
         contentSecurityPolicy: {
@@ -46,9 +45,11 @@ app.use(
     session({
         secret: process.env.SESSION_SECRET,
         resave: false,
-        saveUninitialized: false,
+        saveUninitialized: false, // Upewnij się, że to jest false
         cookie: {
-            secure: process.env.NODE_ENV === "production",
+            // Zmieniono na false, aby sprawdzić czy logowanie zacznie działać
+            // Jeśli masz aktywny HTTPS na Renderze, możesz wrócić do: process.env.NODE_ENV === "production"
+            secure: false, 
             httpOnly: true,
             sameSite: "lax",
             maxAge: 1000 * 60 * 60 * 24 * 7
@@ -56,7 +57,7 @@ app.use(
     })
 );
 
-// Limity zapytań
+// Limity
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 20,
@@ -65,16 +66,15 @@ const authLimiter = rateLimit({
 app.use("/api/register", authLimiter);
 app.use("/api/login", authLimiter);
 
-// Statyczne pliki
+// Statyczne
 app.use(express.static(path.join(__dirname, "public")));
-// Trasy API
+
+// Trasy
 app.use("/api/categories", categoryRoutes);
 app.use("/api/threads", threadRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api", authRoutes); // ZMIENIONE Z POWROTEM NA /api
+app.use("/api", authRoutes);
 
-
-// Obsługa błędów
 app.use(notFound);
 app.use(errorHandler);
 
