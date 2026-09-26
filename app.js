@@ -67,12 +67,12 @@ app.use("/api/login", authLimiter);
 
 // Statyczne pliki
 app.use(express.static(path.join(__dirname, "public")));
-
-// Trasy API - Kategorie na samej górze, żeby nie zostały przechwycone przez inne trasy
+// Trasy API
 app.use("/api/categories", categoryRoutes);
 app.use("/api/threads", threadRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/auth", authRoutes); // Zmienione z /api na /api/auth dla porządku
+app.use("/api", authRoutes); // ZMIENIONE Z POWROTEM NA /api
+
 
 // Obsługa błędów
 app.use(notFound);
