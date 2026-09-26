@@ -17,14 +17,13 @@ const app = express();
 // Wymagane na Render, żeby ciasteczka działały poprawnie za proxy
 app.set("trust proxy", 1);
 
-// Bezpieczna konfiguracja Helmet
 app.use(
     helmet({
         contentSecurityPolicy: {
             useDefaults: true,
             directives: {
                 "default-src": ["'self'"],
-                "script-src": ["'self'"],
+                "script-src": ["'self'", "'unsafe-inline'"], // Dodaliśmy 'unsafe-inline'
                 "connect-src": ["'self'"],
                 "img-src": ["'self'", "data:", "https:"],
                 "style-src": ["'self'", "https:", "'unsafe-inline'"],
