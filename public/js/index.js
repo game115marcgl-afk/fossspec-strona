@@ -1,99 +1,83 @@
+
 "use strict";
 
 let currentUser = null;
 let categories = [];
 
 async function checkUser() {
-    try {
-        const res = await fetch('/api/me');
-        const data = await res.json();
-        const userBar = document.getElementById('userBar');
+    const res = await fetch('/api/me');
+    const data = await res.json();
+    const userBar = document.getElementById('userBar');
 
-        if (data.loggedIn) {
-            currentUser = data.user;
-            userBar.innerHTML = `
-                <span>Witaj, <strong>${escapeHtml(data.user.username)}</strong> ${data.user.role === 'admin' ? '<span style="color: var(--accent);">(Admin)</span>' : ''}</span>
-                <button id="logoutBtn" class="btn btn-danger">Wyloguj</button>
-            `;
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-        } else {
-            userBar.innerHTML = `
-                <a href="/login.html" class="btn btn-outline">Zaloguj</a>
-                <a href="/register.html" class="btn btn-fill">Zarejestruj</a>
-            `;
-        }
-    } catch (err) {
-        console.error("Błąd sprawdzania użytkownika:", err);
+    if (data.loggedIn) {
+        currentUser = data.user;
+        userBar.innerHTML = `
+            <span>Witaj, <strong>${escapeHtml(data.user.username)}</strong> ${data.user.role === 'admin' ? '<span style="color: var(--accent);">(Admin)</span>' : ''}</span>
+            <button id="logoutBtn" class="btn btn-danger">Wyloguj</button>
+        `;
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+    } else {
+        userBar.innerHTML = `
+            <a href="/login.html" class="btn btn-outline">Zaloguj</a>
+            <a href="/register.html" class="btn btn-fill">Zarejestruj</a>
+        `;
     }
 }
 
 async function loadCategories() {
-    try {
-        const res = await fetch('/api/categories');
-        categories = await res.json();
-        
-        // Debugowanie: sprawdzamy co przychodzi z serwera
-        console.log("Kategorie pobrane z serwera:", categories);
-        
-        const select = document.getElementById('category');
-        if (!select) return;
+    const res = await fetch('/api/categories');
+    categories = await res.json();
+    const select = document.getElementById('category');
 
-        if (!Array.isArray(categories) || categories.length === 0) {
-            select.innerHTML = '<option value="" disabled selected>Brak kategorii - skontaktuj się z adminem</option>';
-            return;
-        }
-
-        // Mapujemy kategorie - upewnij się, że w bazie MongoDB pole nazywa się 'name'
-        select.innerHTML = '<option value="" disabled selected>Wybierz kategorię...</option>' +
-            categories.map(c => `
-                <option value="${c._id}">
-                    ${c.icon ? c.icon + ' ' : ''}${escapeHtml(c.name || 'Bez nazwy')}
-                </option>
-            `).join('');
-    } catch (err) {
-        console.error("Błąd ładowania kategorii:", err);
+    if (categories.length === 0) {
+        select.innerHTML = '<option value="" disabled selected>Brak kategorii - skontaktuj się z adminem</option>';
+        return;
     }
+
+    select.innerHTML = '<option value="" disabled selected>Wybierz kategorię...</option>' +
+        categories.map(c => `<option value="${c._id}">${c.icon ? c.icon + ' ' : ''}${escapeHtml(c.name)}</option>`).join('');
 }
 
 async function loadThreads() {
-    try {
-        const res = await fetch('/api/threads');
-        const threads = await res.json();
-        const container = document.getElementById('threadsContainer');
+    const res = await fetch('/api/threads');
+    const threads = await res.json();
+    const container = document.getElementById('threadsContainer');
 
-        if (threads.length === 0) {
-            container.innerHTML = '<p class="empty-state">Brak wątków na forum. Bądź pierwszy i załóż nowy wątek!</p>';
-            return;
-        }
-
-        container.innerHTML = threads.map(t => {
-            const authorName = t.author?.username || 'Nieznany';
-            const categoryName = t.category?.name || 'Bez kategorii';
-            const date = new Date(t.createdAt);
-
-            return `
-                <div class="thread-row" data-id="${t._id}">
-                    <div>
-                        <div>
-                            <span class="badge">${escapeHtml(categoryName)}</span>
-                            <a href="/thread.html?id=${t._id}" class="thread-title">${escapeHtml(t.title)}</a>
-                        </div>
-                        <div class="meta">Autor: <strong>${escapeHtml(authorName)}</strong> &middot; ${date.toLocaleDateString('pl-PL')} ${date.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})} &middot; 💬 ${t.replyCount ?? 0}</div>
-                    </div>
-                    <div style="color: var(--accent); font-weight: bold;"><i class="fas fa-arrow-right"></i></div>
-                </div>
-            `;
-        }).join('');
-
-        attachThreadRowEvents(container);
-    } catch (err) {
-        console.error("Błąd ładowania wątków:", err);
+    if (threads.length === 0) {
+        container.innerHTML = '<p class="empty-state">Brak wątków na forum. Bądź pierwszy i załóż nowy wątek!</p>';
+        return;
     }
+
+    // Uwaga: żadnych atrybutów onclick="" w generowanym HTML - CSP tego nie pozwala.
+    // Nawigacja obsługiwana niżej przez delegację zdarzeń (attachThreadRowEvents).
+    container.innerHTML = threads.map(t => {
+        const authorName = t.author?.username || 'Nieznany';
+        const categoryName = t.category?.name || 'Bez kategorii';
+        const date = new Date(t.createdAt);
+
+        return `
+            <div class="thread-row" data-id="${t._id}">
+                <div>
+                    <div>
+                        <span class="badge">${escapeHtml(categoryName)}</span>
+                        <a href="/thread.html?id=${t._id}" class="thread-title">${escapeHtml(t.title)}</a>
+                    </div>
+                    <div class="meta">Autor: <strong>${escapeHtml(authorName)}</strong> &middot; ${date.toLocaleDateString('pl-PL')} ${date.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})} &middot; 💬 ${t.replyCount ?? 0}</div>
+                </div>
+                <div style="color: var(--accent); font-weight: bold;"><i class="fas fa-arrow-right"></i></div>
+            </div>
+        `;
+    }).join('');
+
+    attachThreadRowEvents(container);
 }
 
 function attachThreadRowEvents(container) {
     container.addEventListener('click', (e) => {
+        // Jeśli kliknięto bezpośrednio link (tytuł wątku), niech przeglądarka
+        // sama go obsłuży - nie duplikujemy nawigacji.
         if (e.target.closest('a')) return;
+
         const row = e.target.closest('.thread-row');
         if (row) window.location.href = `/thread.html?id=${row.dataset.id}`;
     });
