@@ -1,3 +1,4 @@
+
 "use strict";
 const express = require("express");
 const session = require("express-session");
@@ -14,16 +15,17 @@ const sanitizeBody = require("./middleware/sanitize");
 
 const app = express();
 
-// Wymagane na Render, żeby ciasteczka działały poprawnie za proxy
+// Konfiguracja dla proxy (Render/Heroku)
 app.set("trust proxy", 1);
 
+// Ulepszona konfiguracja Helmet
 app.use(
     helmet({
         contentSecurityPolicy: {
             useDefaults: true,
             directives: {
                 "default-src": ["'self'"],
-                "script-src": ["'self'", "'unsafe-inline'"], // Dodaliśmy 'unsafe-inline'
+                "script-src": ["'self'", "'unsafe-inline'"],
                 "connect-src": ["'self'"],
                 "img-src": ["'self'", "data:", "https:"],
                 "style-src": ["'self'", "https:", "'unsafe-inline'"],
@@ -34,7 +36,6 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(sanitizeBody);
 
 if (!process.env.SESSION_SECRET) {
@@ -55,7 +56,7 @@ app.use(
     })
 );
 
-// Ochrona przed brute-force
+// Limity zapytań
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 20,
@@ -64,14 +65,14 @@ const authLimiter = rateLimit({
 app.use("/api/register", authLimiter);
 app.use("/api/login", authLimiter);
 
-// Serwowanie plików statycznych
+// Statyczne pliki
 app.use(express.static(path.join(__dirname, "public")));
 
-// Trasy API
-app.use("/api", authRoutes);
+// Trasy API - Kategorie na samej górze, żeby nie zostały przechwycone przez inne trasy
+app.use("/api/categories", categoryRoutes);
 app.use("/api/threads", threadRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/categories", categoryRoutes);
+app.use("/api/auth", authRoutes); // Zmienione z /api na /api/auth dla porządku
 
 // Obsługa błędów
 app.use(notFound);
