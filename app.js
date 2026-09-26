@@ -32,21 +32,17 @@ if (!process.env.SESSION_SECRET) {
         "Brak SESSION_SECRET w zmiennych środowiskowych! Wygeneruj losowy ciąg znaków i ustaw go w .env."
     );
 }
-
 app.use(
-    session({
-        secret: process.env.SESSION_SECRET,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            secure: process.env.NODE_ENV === "production", // wymaga HTTPS na produkcji
-            httpOnly: true,
-            sameSite: "lax", // podstawowa ochrona przed CSRF
-            maxAge: 1000 * 60 * 60 * 24 * 7
-        }
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+                "script-src": ["'self'"], // Pozwala na skrypty z Twojej domeny
+                "connect-src": ["'self'"], // Pozwala na fetch API do Twojego serwera
+            },
+        },
     })
 );
-
 // Ochrona przed brute-force na logowaniu i rejestracji
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
