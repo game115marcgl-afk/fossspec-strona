@@ -1,95 +1,46 @@
-# 💬 FossSpec Forum
 
-Oficjalna platforma społecznościowa i forum dyskusyjne kanału **FossSpec**, stworzona w Node.js oraz Express, zintegrowana z bazą danych MongoDB Atlas w chmurze.
+# Forum FossSpec
 
----
+W pełni funkcjonalne forum społecznościowe skupione wokół technologii Open Source i Linuxa.
 
-## 🚀 O projekcie
-
-Forum internetowe, na którym użytkownicy mogą zakładać konta, tworzyć wątki dyskusyjne w różnych kategoriach oraz wymieniać się opiniami w komentarzach.
-
-### ✨ Główne funkcje
-
-- **System kont i autoryzacji** — rejestracja i logowanie z użyciem sesji (`express-session`) oraz szyfrowania haseł (`bcryptjs`).
-- **Automatyczna ranga admina** — pierwsza zarejestrowana osoba w systemie otrzymuje uprawnienia administratora.
-- **Kategorie wątków** — dyskusje podzielone na kategorie zarządzane z poziomu bazy danych.
-- **System komentarzy** — odpowiedzi na wątki.
-- **Trwała baza danych** — pełna integracja z MongoDB Atlas (Mongoose ODM).
-
----
-
-## 🛠️ Technologie
-
+## 🚀 Technologie
 - **Backend:** Node.js, Express.js
-- **Baza danych:** MongoDB Atlas, Mongoose
-- **Bezpieczeństwo:** bcryptjs, express-session, helmet, express-mongo-sanitize, express-rate-limit, dotenv
-- **Frontend:** HTML5, CSS3, JavaScript (Fetch API)
-- **Hosting:** Render.com
+- **Baza danych:** MongoDB (Atlas)
+- **Frontend:** HTML5, CSS3, Vanilla JavaScript
+- **Bezpieczeństwo:** Helmet.js, express-session, express-rate-limit
 
----
+## 🛠 Instalacja i uruchomienie lokalne
 
-## 📁 Struktura projektu
-
-```
-fossspec-backend/
-├── server.js              # Punkt wejścia — start serwera
-├── app.js                 # Konfiguracja Express (middleware, trasy)
-├── config/
-│   └── db.js               # Połączenie z MongoDB
-├── models/                 # Schematy Mongoose (User, Thread, Reply, Category)
-├── controllers/            # Logika biznesowa
-├── routes/                 # Definicje endpointów API
-├── middleware/              # Auth, centralny error handler
-├── utils/                  # AppError, asyncHandler, walidacja wejścia
-├── public/                 # Frontend (statyczne pliki)
-├── .env.example             # Wzorzec zmiennych środowiskowych
-└── .gitignore
-```
-
----
-
-## ⚙️ Uruchomienie lokalne
-
-1. **Sklonuj repozytorium:**
+1. Sklonuj repozytorium:
    ```bash
    git clone https://github.com/game115marcgl-afk/fossspec-strona.git
    cd fossspec-strona
    ```
 
-2. **Zainstaluj zależności:**
+2. Zainstaluj zależności:
    ```bash
-   npm install
+   yarn install
    ```
 
-3. **Skonfiguruj zmienne środowiskowe:**
-
-   Skopiuj `.env.example` do `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-
-   Uzupełnij w nim:
-   - `MONGO_URI` — connection string do własnego klastra MongoDB Atlas (pobierz z panelu Atlas → Database Access, **nigdy nie commituj tego pliku**),
-   - `SESSION_SECRET` — długi, losowy ciąg znaków. Możesz wygenerować go komendą:
-     ```bash
-     node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+3. Skonfiguruj zmienne środowiskowe:
+   - Utwórz plik `.env` w głównym folderze i dodaj:
+     ```env
+     PORT=3000
+     MONGO_URI=twój_link_do_mongodb
+     SESSION_SECRET=losowy_długi_ciąg_znaków
      ```
 
-4. **Uruchom serwer:**
+4. Uruchom serwer:
    ```bash
-   npm run dev     # tryb deweloperski, z auto-restartem
-   # albo
-   npm start       # tryb produkcyjny
+   node server.js
    ```
 
-## 🔒 Bezpieczeństwo
+## 📁 Struktura projektu
+- `/public` - pliki frontendowe (HTML, CSS, JS).
+- `/src` - logika backendowa, modele bazy danych i middleware.
+- `/server.js` - punkt wejścia aplikacji.
 
-- Plik `.env` **nigdy** nie trafia do repozytorium (patrz `.gitignore`).
-- Hasła użytkowników są hashowane (bcrypt, 12 rund) i nigdy nie są zwracane w odpowiedziach API.
-- Wejście z formularzy jest walidowane i sanityzowane pod kątem NoSQL injection.
-- Endpointy logowania/rejestracji mają rate limiting.
-- Szczegóły w [SECURITY.md](./SECURITY.md).
-
-Jeśli znajdziesz lukę bezpieczeństwa, zgłoś ją zgodnie z instrukcją w `SECURITY.md` — nie publikuj jej publicznie w Issues.
-
----
+## 🔐 Uwagi dotyczące bezpieczeństwa
+- Aplikacja wykorzystuje **Helmet.js** do zabezpieczenia nagłówków HTTP oraz polityki **CSP (Content Security Policy)**.
+- Skrypty JS zostały wydzielone do osobnych plików w `/public/js/`, aby zapewnić zgodność z polityką bezpieczeństwa przeglądarek.
+```
