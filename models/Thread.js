@@ -1,16 +1,14 @@
 "use strict";
+const mongoose = require("mongoose");
 
-const urlParams = new URLSearchParams(window.location.search);
-const threadId = urlParams.get('id');
-let currentUser = null;
+const threadSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    content: { type: String, required: true },
+    author: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" }
+}, { timestamps: true });
 
-// Zabezpieczenie przed XSS: dane od użytkowników (tytuły, treść, nazwy) NIGDY
-// nie trafiają bezpośrednio do innerHTML - zawsze przechodzą przez tę funkcję.
-function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str ?? '';
-    return div.innerHTML;
-}
+module.exports = mongoose.model("Thread", threadSchema);
 
 async function init() {
     const meRes = await fetch('/api/me');
