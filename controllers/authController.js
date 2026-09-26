@@ -32,8 +32,8 @@ const register = asyncHandler(async (req, res, next) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const count = await User.countDocuments();
-    const role = count === 0 ? "admin" : "user";
+    // ZMIANA: Każdy nowy użytkownik otrzymuje rolę "user"
+    const role = "user";
 
     const user = await User.create({
         username,
