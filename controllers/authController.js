@@ -32,7 +32,7 @@ const register = asyncHandler(async (req, res, next) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // ZMIANA: Każdy nowy użytkownik otrzymuje rolę "user"
+    // Każdy nowy użytkownik ma rolę "user"
     const role = "user";
 
     const user = await User.create({
@@ -44,7 +44,12 @@ const register = asyncHandler(async (req, res, next) => {
     });
 
     req.session.user = { id: user._id, username: user.username, role: user.role };
-    res.json({ success: true, message: "Konto utworzone!", user: req.session.user });
+    
+    // Wymuszony zapis sesji dla rejestracji
+    req.session.save((err) => {
+        if (err) return next(err);
+        res.json({ success: true, message: "Konto utworzone!", user: req.session.user });
+    });
 });
 
 const login = asyncHandler(async (req, res, next) => {
@@ -62,7 +67,12 @@ const login = asyncHandler(async (req, res, next) => {
     }
 
     req.session.user = { id: user._id, username: user.username, role: user.role };
-    res.json({ success: true, message: "Zalogowano!", user: req.session.user });
+    
+    // WYMUSZONE ZAPISANIE SESJI - tutaj rozwiązujemy Twój problem "wylogowywania"
+    req.session.save((err) => {
+        if (err) return next(err);
+        res.json({ success: true, message: "Zalogowano!", user: req.session.user });
+    });
 });
 
 const me = (req, res) => {
