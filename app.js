@@ -33,15 +33,18 @@ if (!process.env.SESSION_SECRET) {
     );
 }
 app.use(
-    helmet({
-        contentSecurityPolicy: {
-            directives: {
-                ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-                "script-src": ["'self'"], // Pozwala na skrypty z Twojej domeny
-                "connect-src": ["'self'"], // Pozwala na fetch API do Twojego serwera
-            },
-        },
+    session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            secure: process.env.NODE_ENV === "production", // TO JEST KLUCZOWE
+            httpOnly: true,
+            sameSite: "lax",
+            maxAge: 1000 * 60 * 60 * 24 * 7
+        }
     })
+);
 );
 // Ochrona przed brute-force na logowaniu i rejestracji
 const authLimiter = rateLimit({
