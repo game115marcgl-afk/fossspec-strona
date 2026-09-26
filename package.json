@@ -16,7 +16,6 @@
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.4.1",
     "express-session": "^1.19.0",
     "helmet": "^8.0.0",
