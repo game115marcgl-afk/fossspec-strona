@@ -1,4 +1,3 @@
-
 "use strict";
 const express = require("express");
 const session = require("express-session");
@@ -15,38 +14,49 @@ const sanitizeBody = require("./middleware/sanitize");
 
 const app = express();
 
-// Wymagane na Render/Heroku i podobnych, żeby ciasteczka "secure" działały poprawnie za proxy
+// Wymagane na Render, żeby ciasteczka działały poprawnie za proxy
 app.set("trust proxy", 1);
 
-app.use(helmet()); // podstawowe nagłówki bezpieczeństwa (CSP, X-Frame-Options itd.)
+// Bezpieczna konfiguracja Helmet
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            useDefaults: true,
+            directives: {
+                "default-src": ["'self'"],
+                "script-src": ["'self'"],
+                "connect-src": ["'self'"],
+                "img-src": ["'self'", "data:", "https:"],
+                "style-src": ["'self'", "https:", "'unsafe-inline'"],
+            },
+        },
+    })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Usuwa z req.body klucze zaczynające się od "$" lub zawierające ".",
-// czyli druga warstwa ochrony przed NoSQL injection (pierwsza to ensureString w kontrolerach).
-// Własna implementacja - express-mongo-sanitize nie działa z Express 5.
 app.use(sanitizeBody);
 
 if (!process.env.SESSION_SECRET) {
-    throw new Error(
-        "Brak SESSION_SECRET w zmiennych środowiskowych! Wygeneruj losowy ciąg znaków i ustaw go w .env."
-    );
+    throw new Error("Brak SESSION_SECRET w zmiennych środowiskowych!");
 }
+
 app.use(
     session({
         secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
         cookie: {
-            secure: process.env.NODE_ENV === "production", // TO JEST KLUCZOWE
+            secure: process.env.NODE_ENV === "production",
             httpOnly: true,
             sameSite: "lax",
             maxAge: 1000 * 60 * 60 * 24 * 7
         }
     })
 );
-);
-// Ochrona przed brute-force na logowaniu i rejestracji
+
+// Ochrona przed brute-force
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 20,
@@ -55,14 +65,17 @@ const authLimiter = rateLimit({
 app.use("/api/register", authLimiter);
 app.use("/api/login", authLimiter);
 
+// Serwowanie plików statycznych
 app.use(express.static(path.join(__dirname, "public")));
 
+// Trasy API
 app.use("/api", authRoutes);
 app.use("/api/threads", threadRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/categories", categoryRoutes);
 
+// Obsługa błędów
 app.use(notFound);
-app.use(errorHandler); // ZAWSZE jako ostatni middleware
+app.use(errorHandler);
 
 module.exports = app;
