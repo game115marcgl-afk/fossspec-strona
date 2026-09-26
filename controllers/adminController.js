@@ -1,10 +1,13 @@
 "use strict";
-const User = require("../models/User");
-const asyncHandler = require("../utils/asyncHandler");
+const express = require("express");
+const router = express.Router();
+// Importujesz middleware, który sprawdza czy ktoś jest zalogowany i czy jest adminem
+const { requireAuth, requireAdmin } = require("../middleware/auth"); 
+const { listUsers } = require("../controllers/adminController");
 
-const listUsers = asyncHandler(async (req, res) => {
-    const users = await User.find().sort({ createdAt: -1 });
-    res.json(users);
-});
+// TYLKO admin może wykonać te operacje
+router.use(requireAuth, requireAdmin); 
 
-module.exports = { listUsers };
+router.get("/users", listUsers);
+
+module.exports = router;
