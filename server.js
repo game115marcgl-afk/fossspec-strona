@@ -4,6 +4,7 @@
  * Licensed under the MIT License. See the LICENSE file in the project root.
  * SPDX-License-Identifier: MIT
  */
+
 "use strict";
 require("dotenv").config();
 const app = require("./app");
