@@ -1,4 +1,3 @@
-
 "use strict";
 
 let currentUser = null;
@@ -6,7 +5,7 @@ let categories = [];
 
 async function checkUser() {
     try {
-        const res = await fetch('/api/me', { credentials: 'include' });
+        const res = await fetch('/api/me');
         const data = await res.json();
         const userBar = document.getElementById('userBar');
 
@@ -30,16 +29,11 @@ async function checkUser() {
 
 async function loadCategories() {
     try {
-        // Dodałem credentials: 'include' oraz logowanie surowej odpowiedzi
-        const res = await fetch('/api/categories', { credentials: 'include' });
-        const text = await res.text();
-        console.log("Surowa odpowiedź z API kategorii:", text);
-        
-        categories = JSON.parse(text);
+        const res = await fetch('/api/categories');
+        categories = await res.json();
         const select = document.getElementById('category');
 
         if (!Array.isArray(categories) || categories.length === 0) {
-            console.warn("API zwróciło pustą listę kategorii.");
             if (select) select.innerHTML = '<option value="" disabled selected>Brak kategorii - skontaktuj się z adminem</option>';
             return;
         }
@@ -55,8 +49,7 @@ async function loadCategories() {
 
 async function loadThreads() {
     try {
-        // Dodałem credentials: 'include'
-        const res = await fetch('/api/threads', { credentials: 'include' });
+        const res = await fetch('/api/threads');
         const threads = await res.json();
         const container = document.getElementById('threadsContainer');
 
@@ -78,24 +71,23 @@ async function loadThreads() {
                             <a href="/thread.html?id=${t._id}" class="thread-title">${escapeHtml(t.title)}</a>
                         </div>
                         <div class="meta">Autor: <strong>${escapeHtml(authorName)}</strong> &middot; ${date.toLocaleDateString('pl-PL')} ${date.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})} &middot; 💬 ${t.replyCount ?? 0}</div>
-                    </div>
+                        </div>
                     <div style="color: var(--accent); font-weight: bold;"><i class="fas fa-arrow-right"></i></div>
                 </div>
             `;
         }).join('');
-
-        attachThreadRowEvents(container);
+        // Uwaga: BEZ wywołania attachThreadRowEvents tutaj - listener jest
+        // rejestrowany raz w setupStaticListeners() (delegacja zdarzeń),
+        // więc odświeżanie listy nie dokłada kolejnych duplikatów.
     } catch (err) {
         console.error("Błąd ładowania wątków:", err);
     }
 }
 
-function attachThreadRowEvents(container) {
-    container.addEventListener('click', (e) => {
-        if (e.target.closest('a')) return;
-        const row = e.target.closest('.thread-row');
-        if (row) window.location.href = `/thread.html?id=${row.dataset.id}`;
-    });
+function handleThreadsContainerClick(e) {
+    if (e.target.closest('a')) return; // link sam obsłuży swoją nawigację
+    const row = e.target.closest('.thread-row');
+    if (row) window.location.href = `/thread.html?id=${row.dataset.id}`;
 }
 
 function openModal() {
@@ -124,8 +116,7 @@ async function handleCreateThread(e) {
     const res = await fetch('/api/threads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, category, content }),
-        credentials: 'include' // Dla bezpieczeństwa sesji
+        body: JSON.stringify({ title, category, content })
     });
 
     const data = await res.json();
@@ -140,7 +131,7 @@ async function handleCreateThread(e) {
 }
 
 async function logout() {
-    await fetch('/api/logout', { credentials: 'include' });
+    await fetch('/api/logout');
     window.location.reload();
 }
 
@@ -154,6 +145,9 @@ function setupStaticListeners() {
     document.getElementById('newThreadBtn').addEventListener('click', openModal);
     document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
     document.getElementById('createThreadForm').addEventListener('submit', handleCreateThread);
+    // Listener rejestrowany RAZ na kontenerze (delegacja zdarzeń) - działa
+    // poprawnie nawet dla wierszy dodanych później przez loadThreads().
+    document.getElementById('threadsContainer').addEventListener('click', handleThreadsContainerClick);
 }
 
 (async function init() {
