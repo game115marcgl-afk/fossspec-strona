@@ -1,4 +1,10 @@
-
+> [!WARNING]
+> **PROJEKT W FAZIE BETA / INTENSYWNY ROZWÓJ**
+> Instancja demonstracyjna / forum jest obecnie na etapie wczesnych testów. 
+> Prosimy **nie rejestrować kont ani nie wprowdzać danych**, ponieważ baza danych może zostać w dowolnym momencie wyczyszczona, a system zawiera krytyczne błędy.
+>
+> **Współpraca:**
+> Jeśli jesteś programistą i chcesz pomóc w rozwoju kodu lub zgłaszaniu łatek, skontaktuj się ze mną przez adres e-mail podany w opisie mojego kanału YouTube.
 # Forum FossSpec
 
 W pełni funkcjonalne forum społecznościowe skupione wokół technologii Open Source i Linuxa.
