@@ -1,4 +1,5 @@
 "use strict";
+const { sendVerificationEmail } = require("../utils/mailer");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const AppError = require("../utils/AppError");
