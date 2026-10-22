@@ -49,16 +49,13 @@
             const res = await fetch('/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include', // ← KLUCZOWE: pozwala przeglądarce zapisać ciasteczko sesji
+                credentials: 'include',
                 body: JSON.stringify({ username, password })
             });
 
             const data = await res.json();
 
             if (res.ok && data.success) {
-                // Opcjonalnie, jeśli backend zwraca token
-                if (data.token) localStorage.setItem('token', data.token);
-
                 window.location.href = '/admin.html';
             } else {
                 errorMsg.textContent = data.message || 'Niepoprawny login lub hasło!';
