@@ -2,27 +2,20 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zarządzanie Członkami - Admin</title>
     <style>
-        * { box-sizing: border-box; font-family: sans-serif; }
-        body { background: #121212; color: #fff; margin: 0; padding: 2rem; }
-        .container { max-width: 900px; margin: 0 auto; }
-        table { width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 8px; overflow: hidden; margin-top: 1.5rem; border: 1px solid #333; }
+        body { background: #121212; color: #fff; font-family: sans-serif; padding: 2rem; }
+        a { color: #4CAF50; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+        table { width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 8px; overflow: hidden; }
         th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #333; }
-        th { background: #252525; color: #4CAF50; }
-        .badge-admin { background: #4CAF50; color: #fff; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; }
-        .badge-user { background: #555; color: #fff; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; }
-        .btn { padding: 0.5rem 1rem; background: #333; color: #fff; border: none; border-radius: 4px; text-decoration: none; cursor: pointer; font-weight: bold; }
-        .btn:hover { background: #444; }
+        th { background: #2a2a2a; color: #4CAF50; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>Panel Administratora - Członkowie Forum</h1>
-        <a href="/" class="btn">← Powrót do Forum</a>
-    </div>
+    <a href="/admin.html">← Powrót do Panelu Admina</a>
+    <h2>Panel Administratora - Członkowie Forum</h2>
 
     <table>
         <thead>
@@ -33,31 +26,55 @@
                 <th>Data rejestracji</th>
             </tr>
         </thead>
-        <tbody id="usersTable">
-            <tr><td colspan="4" style="text-align:center;">Ładowanie listy członków...</td></tr>
+        <tbody id="usersTableBody">
+            <tr>
+                <td colspan="4" style="text-align: center;">Ładowanie listy członków...</td>
+            </tr>
         </tbody>
     </table>
-</div>
 
 <script>
     async function loadUsers() {
-        const res = await fetch('/api/admin/users');
-        if (!res.ok) {
-            alert('Brak uprawnień administratora!');
-            window.location.href = '/';
-            return;
-        }
-        const users = await res.json();
-        const tbody = document.getElementById('usersTable');
+        try {
+            const res = await fetch('/api/users', { // Upewnij się, że ta ścieżka zgadza się z Twoim backendem
+                method: 'GET',
+                credentials: 'include' // ← KLUCZOWE: wysyła sesję, aby przejść przez requireAuth i requireAdmin
+            });
 
-        tbody.innerHTML = users.map(u => `
-            <tr>
-                <td><strong>${u.username}</strong></td>
-                <td>${u.email}</td>
-                <td><span class="${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">${u.role.toUpperCase()}</span></td>
-                <td>${new Date(u.createdAt).toLocaleDateString('pl-PL')}</td>
-            </tr>
-        `).join('');
+            if (!res.ok) {
+                throw new Error('Brak autoryzacji');
+            }
+
+            const users = await res.json();
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Brak użytkowników</td></tr>';
+                return;
+            }
+
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                // Dostosuj pola (user.username, user.email) do tego, jak nazywają się w Twojej bazie danych
+                tr.innerHTML = `
+                    <td>${user.username || user.nick || 'Brak'}</td>
+                    <td>${user.email || 'Brak'}</td>
+                    <td>${user.role || 'Użytkownik'}</td>
+                    <td>${user.createdAt ? new Date(user.createdAt).toLocaleDateString('pl-PL') : 'Brak'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+        } catch (err) {
+            document.getElementById('usersTableBody').innerHTML = 
+                `<tr><td colspan="4" style="text-align: center; color: #ff5252;">Błąd: ${err.message}. Sprawdź, czy jesteś zalogowany jako admin.</td></tr>`;
+            
+            // Opcjonalnie: przekieruj do logowania, jeśli błąd to 401
+            if (err.message.includes('autoryzacji')) {
+                setTimeout(() => window.location.href = '/login.html', 2000);
+            }
+        }
     }
 
     loadUsers();
