@@ -36,45 +36,57 @@
 <script>
     document.getElementById('regForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const username = document.getElementById('username').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        const password2 = document.getElementById('password2').value;
-        const msg = document.getElementById('msg');
+  const register = asyncHandler(async (req, res, next) => {
+    const username = ensureString(req.body.username);
+    const email = ensureString(req.body.email)?.toLowerCase();
+    const password = ensureString(req.body.password);
+    const ageConsent = req.body.ageConsent === true;
 
-        if (password !== password2) {
-            msg.style.color = '#ff5252';
-            msg.textContent = 'Hasła nie są identyczne!';
-            return;
-        }
-        if (password.length < 8) {
-            msg.style.color = '#ff5252';
-            msg.textContent = 'Hasło musi mieć co najmniej 8 znaków!';
-            return;
-        }
+    if (!username || !email || !password) {
+        return next(new AppError("Wypełnij wszystkie pola!", 400));
+    }
+    if (!ageConsent) {
+        return next(new AppError("Musisz potwierdzić swój wiek, aby założyć konto.", 400));
+    }
+    if (username.length < 3 || username.length > 30) {
+        return next(new AppError("Nick musi mieć od 3 do 30 znaków.", 400));
+    }
+    if (!EMAIL_REGEX.test(email)) {
+        return next(new AppError("Nieprawidłowy adres e-mail.", 400));
+    }
+    if (password.length < 8) {
+        return next(new AppError("Hasło musi mieć minimum 8 znaków.", 400));
+    }
 
-        try {
-            const res = await fetch('/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ username, email, password })
-            });
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+        return next(new AppError("Użytkownik o takim nicku lub emailu już istnieje!", 400));
+    }
 
-            const data = await res.json();
-            if (res.ok && data.success) {
-                msg.style.color = '#4CAF50';
-                msg.textContent = 'Konto utworzone! Przekierowanie...';
-                setTimeout(() => window.location.href = '/', 1500);
-            } else {
-                msg.style.color = '#ff5252';
-                msg.textContent = data.message || 'Błąd rejestracji';
-            }
-        } catch (err) {
-            msg.style.color = '#ff5252';
-            msg.textContent = 'Błąd połączenia z serwerem';
-        }
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const hashedCode = await bcrypt.hash(code, 10);
+
+    const user = await User.create({
+        username,
+        email,
+        password: hashedPassword,
+        role: "user",
+        isVerified: false,
+        verifyCode: hashedCode,
+        verifyCodeExpiresAt: new Date(Date.now() + 60 * 60 * 1000)
     });
+
+    try {
+        await sendVerificationEmail(email, username, code);
+    } catch (mailErr) {
+        console.error("Blad wysylki e-maila:", mailErr.message);
+        await User.deleteOne({ _id: user._id });
+        return next(new AppError("Nie udało się wysłać e-maila. Spróbuj później.", 500));
+    }
+
+    res.status(201).json({ success: true, message: "Konto utworzone! Sprawdź e-mail.", email });
+});
 </script>
 
 </body>
