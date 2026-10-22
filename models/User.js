@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema(
         },
         isVerified: { type: Boolean, default: false },
         verifyCode: { type: String, select: false },
+        verifyCodeExpiresAt: { type: Date, select: false },
 
         avatarUrl: { type: String, default: "" },
         bio: { type: String, maxlength: 300, default: "" },
