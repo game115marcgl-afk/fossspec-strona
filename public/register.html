@@ -10,9 +10,10 @@
         .card { background: #1e1e1e; padding: 2rem; border-radius: 8px; width: 100%; max-width: 380px; border: 1px solid #333; }
         h2 { color: #4CAF50; margin-top: 0; text-align: center; }
         input { width: 100%; padding: 0.8rem; margin-bottom: 1rem; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 4px; }
+        input:focus { border-color: #4CAF50; outline: none; }
         button { width: 100%; background: #4CAF50; color: white; border: none; padding: 0.8rem; border-radius: 4px; font-weight: bold; cursor: pointer; }
         button:hover { background: #45a049; }
-        .msg { margin-top: 1rem; text-align: center; font-size: 0.9rem; }
+        .msg { margin-top: 1rem; text-align: center; font-size: 0.9rem; min-height: 1.2em; }
     </style>
 </head>
 <body>
@@ -20,9 +21,10 @@
 <div class="card">
     <h2>Dołącz do Forum FossSpec</h2>
     <form id="regForm">
-        <input type="text" id="username" placeholder="Twój Nick" required autocomplete="username">
+        <input type="text" id="username" placeholder="Twój Nick" required autocomplete="username" minlength="3" maxlength="30">
         <input type="email" id="email" placeholder="Adres Email" required autocomplete="email">
-        <input type="password" id="password" placeholder="Hasło" required autocomplete="new-password" minlength="8">
+        <input type="password" id="password" placeholder="Hasło (min. 8 znaków)" required autocomplete="new-password" minlength="8">
+        <input type="password" id="password2" placeholder="Powtórz hasło" required autocomplete="new-password" minlength="8">
         <button type="submit">Załóż Konto</button>
         <div id="msg" class="msg"></div>
     </form>
@@ -37,7 +39,20 @@
         const username = document.getElementById('username').value.trim();
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
+        const password2 = document.getElementById('password2').value;
         const msg = document.getElementById('msg');
+
+        // Walidacja po stronie klienta
+        if (password !== password2) {
+            msg.style.color = '#ff5252';
+            msg.textContent = 'Hasła nie są identyczne!';
+            return;
+        }
+        if (password.length < 8) {
+            msg.style.color = '#ff5252';
+            msg.textContent = 'Hasło musi mieć co najmniej 8 znaków!';
+            return;
+        }
 
         try {
             const res = await fetch('/api/register', {
