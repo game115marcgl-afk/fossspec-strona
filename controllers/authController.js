@@ -88,12 +88,16 @@ const me = (req, res) => {
     res.json({ loggedIn: false });
 };
 
-const logout = (req, res, next) => {
+const logout = async (req, res, next) => {
+    // LOGOWANIE WYLOGOWANIA (zanim zniszczymy sesję)
+    if (req.session?.user?.id) {
+        await logActivity(req, "logout", "Wylogowano");
+    }
+    
     req.session.destroy((err) => {
         if (err) return next(err);
         res.clearCookie("connect.sid");
         res.json({ success: true });
     });
 };
-
 module.exports = { register, login, me, logout };
