@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zarządzanie Członkami - Admin</title>
     <style>
-        body { background: #121212; color: #fff; font-family: sans-serif; padding: 2rem; }
+        body { background: #121212; color: #fff; font-family: sans-serif; padding: 2rem; margin: 0; }
         a { color: #4CAF50; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
-        table { width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 8px; overflow: hidden; }
+        a:hover { text-decoration: underline; }
+        h2 { color: #4CAF50; }
+        table { width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 8px; overflow: hidden; margin-top: 1rem; }
         th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #333; }
         th { background: #2a2a2a; color: #4CAF50; }
+        tr:hover { background: #252525; }
+        .error { color: #ff5252; text-align: center; padding: 2rem; }
     </style>
 </head>
 <body>
@@ -35,46 +39,62 @@
 
 <script>
     async function loadUsers() {
+        const tbody = document.getElementById('usersTableBody');
+
         try {
-            const res = await fetch('/api/users', { // Upewnij się, że ta ścieżka zgadza się z Twoim backendem
+            const res = await fetch('/api/users', {
                 method: 'GET',
                 credentials: 'include' // ← KLUCZOWE: wysyła sesję, aby przejść przez requireAuth i requireAdmin
             });
 
+            if (res.status === 401) {
+                throw new Error('Musisz być zalogowany!');
+            }
+            if (res.status === 403) {
+                throw new Error('Brak uprawnień administratora!');
+            }
             if (!res.ok) {
-                throw new Error('Brak autoryzacji');
+                throw new Error(`Błąd serwera (${res.status})`);
             }
 
             const users = await res.json();
-            const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '';
 
-            if (users.length === 0) {
+            if (!users || users.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Brak użytkowników</td></tr>';
                 return;
             }
 
             users.forEach(user => {
                 const tr = document.createElement('tr');
-                // Dostosuj pola (user.username, user.email) do tego, jak nazywają się w Twojej bazie danych
                 tr.innerHTML = `
-                    <td>${user.username || user.nick || 'Brak'}</td>
-                    <td>${user.email || 'Brak'}</td>
-                    <td>${user.role || 'Użytkownik'}</td>
+                    <td>${escapeHtml(user.username || 'Brak')}</td>
+                    <td>${escapeHtml(user.email || 'Brak')}</td>
+                    <td>${escapeHtml(user.role || 'user')}</td>
                     <td>${user.createdAt ? new Date(user.createdAt).toLocaleDateString('pl-PL') : 'Brak'}</td>
                 `;
                 tbody.appendChild(tr);
             });
 
         } catch (err) {
-            document.getElementById('usersTableBody').innerHTML = 
-                `<tr><td colspan="4" style="text-align: center; color: #ff5252;">Błąd: ${err.message}. Sprawdź, czy jesteś zalogowany jako admin.</td></tr>`;
-            
-            // Opcjonalnie: przekieruj do logowania, jeśli błąd to 401
-            if (err.message.includes('autoryzacji')) {
+            tbody.innerHTML = `<tr><td colspan="4" class="error">Błąd: ${escapeHtml(err.message)}</td></tr>`;
+
+            // Przy błędzie autoryzacji przekieruj do logowania
+            if (err.message.includes('zalogowany') || err.message.includes('uprawnien')) {
                 setTimeout(() => window.location.href = '/login.html', 2000);
             }
         }
+    }
+
+    // Pomocnicza funkcja do zabezpieczenia przed XSS
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     loadUsers();
