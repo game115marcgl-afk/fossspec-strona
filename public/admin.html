@@ -25,6 +25,7 @@
     <div class="nav-links">
         <a href="/">Strona główna</a>
         <a href="/admin-users.html">Członkowie</a>
+        <a href="/admin-activity.html">Monitorowanie Aktywności</a>
         <button id="logoutBtn" class="logout-btn">Wyloguj</button>
     </div>
 </header>
@@ -68,7 +69,7 @@
             const data = await res.json();
             console.log('Sesja:', data.user);
 
-            const adminRes = await api('/api/users');
+            const adminRes = await api('/api/admin/users');
 
             if (adminRes.status === 403) {
                 document.getElementById('postsList').textContent =
@@ -100,12 +101,17 @@
     logoutBtn.addEventListener('click', async () => {
         logoutBtn.disabled = true;
         try {
-            await api('/api/logout', { method: 'POST' });
+            const res = await api('/api/logout', { method: 'POST' });
+            
+            if (res.ok) {
+                window.location.href = '/login.html';
+            } else {
+                alert('Błąd wylogowywania');
+                logoutBtn.disabled = false;
+            }
         } catch (err) {
             console.error('Błąd wylogowania:', err);
-        } finally {
-            localStorage.removeItem('token');
-            window.location.href = '/login.html';
+            logoutBtn.disabled = false;
         }
     });
 
