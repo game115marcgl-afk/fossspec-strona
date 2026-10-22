@@ -63,18 +63,26 @@ const login = asyncHandler(async (req, res, next) => {
     const user = await User.findOne({ username }).select("+password");
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
+        // LOGOWANIE NIEUDANEJ PRÓBY
+        if (user) {
+            await logActivity(req, "login_failed", "Nieudana próba logowania", {
+                username: username
+            });
+        }
         return next(new AppError("Błędny login lub hasło!", 401));
     }
 
     req.session.user = { id: user._id, username: user.username, role: user.role };
     
-    // WYMUSZONE ZAPISANIE SESJI - tutaj rozwiązujemy Twój problem "wylogowywania"
-    req.session.save((err) => {
+    req.session.save(async (err) => {
         if (err) return next(err);
+        
+        // LOGOWANIE UDANEGO LOGOWANIA
+        await logActivity(req, "login_success", "Zalogowano pomyślnie");
+        
         res.json({ success: true, message: "Zalogowano!", user: req.session.user });
     });
 });
-
 const me = (req, res) => {
     if (req.session?.user) return res.json({ loggedIn: true, user: req.session.user });
     res.json({ loggedIn: false });
