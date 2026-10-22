@@ -42,7 +42,6 @@
         const password2 = document.getElementById('password2').value;
         const msg = document.getElementById('msg');
 
-        // Walidacja po stronie klienta
         if (password !== password2) {
             msg.style.color = '#ff5252';
             msg.textContent = 'Hasła nie są identyczne!';
@@ -58,7 +57,7 @@
             const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include', // ← KLUCZOWE: tworzy sesję od razu po rejestracji
+                credentials: 'include',
                 body: JSON.stringify({ username, email, password })
             });
 
