@@ -44,7 +44,7 @@
         try {
             const res = await fetch('/api/users', {
                 method: 'GET',
-                credentials: 'include' // ← KLUCZOWE: wysyła sesję, aby przejść przez requireAuth i requireAdmin
+                credentials: 'include'
             });
 
             if (res.status === 401) {
@@ -79,14 +79,12 @@
         } catch (err) {
             tbody.innerHTML = `<tr><td colspan="4" class="error">Błąd: ${escapeHtml(err.message)}</td></tr>`;
 
-            // Przy błędzie autoryzacji przekieruj do logowania
             if (err.message.includes('zalogowany') || err.message.includes('uprawnien')) {
                 setTimeout(() => window.location.href = '/login.html', 2000);
             }
         }
     }
 
-    // Pomocnicza funkcja do zabezpieczenia przed XSS
     function escapeHtml(str) {
         if (str === null || str === undefined) return '';
         return String(str)
@@ -99,6 +97,9 @@
 
     loadUsers();
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
