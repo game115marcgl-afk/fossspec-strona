@@ -2,6 +2,7 @@
 "use strict";
 const express = require("express");
 const session = require("express-session");
+const MongoStore = require("connect-mongo"); // ← DODANE: do trwałego przechowywania sesji
 const path = require("path");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
@@ -15,7 +16,7 @@ const sanitizeBody = require("./middleware/sanitize");
 
 const app = express();
 
-// Render wymaga trust proxy dla sesji
+// Render wymaga trust proxy dla sesji i ciasteczek
 app.set("trust proxy", 1);
 
 app.use(
@@ -24,7 +25,7 @@ app.use(
             useDefaults: true,
             directives: {
                 "default-src": ["'self'"],
-                "script-src": ["'self'", "'unsafe-inline'"],
+                "script-src": ["'self'", "'unsafe-inline'"], // Pozwala na nasz inline JS
                 "connect-src": ["'self'"],
                 "img-src": ["'self'", "data:", "https:"],
                 "style-src": ["'self'", "https:", "'unsafe-inline'"],
@@ -41,18 +42,24 @@ if (!process.env.SESSION_SECRET) {
     throw new Error("Brak SESSION_SECRET w zmiennych środowiskowych!");
 }
 
+// ✅ POPRAWIONA KONFIGURACJA SESJI
 app.use(
     session({
+        store: MongoStore.create({
+            mongoUrl: process.env.MONGO_URI, // Upewnij się, że masz to w .env
+            collectionName: "sessions",
+        }),
         secret: process.env.SESSION_SECRET,
         resave: false,
-        saveUninitialized: false, // Upewnij się, że to jest false
+        saveUninitialized: false,
+        rolling: true, // Odświeża czas ważności ciasteczka przy każdej aktywności
         cookie: {
-            // Zmieniono na false, aby sprawdzić czy logowanie zacznie działać
-            // Jeśli masz aktywny HTTPS na Renderze, możesz wrócić do: process.env.NODE_ENV === "production"
-            secure: false, 
+            // secure: true jest wymagane na Renderze (HTTPS). 
+            // Na localhost możesz tymczasowo dać false, ale production musi być true.
+            secure: process.env.NODE_ENV === "production", 
             httpOnly: true,
             sameSite: "lax",
-            maxAge: 1000 * 60 * 60 * 24 * 7
+            maxAge: 1000 * 60 * 60 * 24 * 7 // 7 dni
         }
     })
 );
