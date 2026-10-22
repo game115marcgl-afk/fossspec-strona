@@ -13,6 +13,7 @@
         .nav-links { display: flex; gap: 1rem; align-items: center; }
         button.logout-btn { background: #ff5252; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
         button.logout-btn:hover { background: #ff1744; }
+        button.logout-btn:disabled { background: #666; cursor: not-allowed; }
         .card { background: #1e1e1e; padding: 1.5rem; border-radius: 8px; margin-top: 1rem; }
         .card h3 { color: #4CAF50; margin-top: 0; }
     </style>
@@ -35,56 +36,80 @@
 </div>
 
 <div class="card">
-    <h3>Istniejące wpisy</h3>
+    <h3>Statystyki</h3>
     <p id="postsList">Ładowanie...</p>
 </div>
 
 <script>
-    // 1. Sprawdzenie uprawnień przy załadowaniu strony
-    async function checkAuth() {
-        try {
-            const res = await fetch('/api/me', {
-                method: 'GET',
-                credentials: 'include' // ← KLUCZOWE: wysyła ciasteczko sesji
-            });
+    const logoutBtn = document.getElementById('logoutBtn');
 
-            if (!res.ok) {
-                // Nieautoryzowany → przekieruj do logowania
+    async function api(url, options = {}) {
+        return fetch(url, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            ...options
+        });
+    }
+
+    async function init() {
+        logoutBtn.disabled = true;
+
+        try {
+            const res = await api('/api/me');
+
+            if (res.status === 401) {
                 window.location.href = '/login.html';
                 return;
             }
+            if (!res.ok) {
+                throw new Error('Serwer zwrócił błąd: ' + res.status);
+            }
 
             const data = await res.json();
-            // Opcjonalnie: sprawdź czy to na pewno admin
-            if (data.user && data.user.role !== 'admin') {
-                alert('Brak uprawnień administratora!');
-                window.location.href = '/login.html';
+            console.log('Sesja:', data.user);
+
+            const adminRes = await api('/api/users');
+
+            if (adminRes.status === 403) {
+                document.getElementById('postsList').textContent =
+                    'To konto nie ma roli admin. Nadaj rolę w bazie danych i zaloguj się ponownie.';
+                logoutBtn.disabled = false;
+                return;
             }
+            if (adminRes.status === 401) {
+                window.location.href = '/login.html';
+                return;
+            }
+            if (!adminRes.ok) {
+                throw new Error('Błąd pobierania danych panelu');
+            }
+
+            const users = await adminRes.json();
+            document.getElementById('postsList').textContent =
+                'Połączono z panelem. Liczba członków forum: ' + users.length;
+
         } catch (err) {
-            console.error('Błąd sprawdzania sesji:', err);
-            window.location.href = '/login.html';
+            console.error(err);
+            const el = document.getElementById('postsList');
+            if (el) el.textContent = 'Błąd: ' + err.message;
+        } finally {
+            logoutBtn.disabled = false;
         }
     }
 
-    // 2. Obsługa wylogowywania
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
+    logoutBtn.addEventListener('click', async () => {
+        logoutBtn.disabled = true;
         try {
-            // Wywołaj backend, aby zniszczyć sesję na serwerze
-            await fetch('/api/logout', {
-                method: 'POST',
-                credentials: 'include' // ← KLUCZOWE: pozwala serwerowi wyczyścić ciasteczko
-            });
+            await api('/api/logout', { method: 'POST' });
         } catch (err) {
-            console.error('Błąd podczas wylogowywania:', err);
+            console.error('Błąd wylogowania:', err);
         } finally {
-            // Wyczyść dane lokalne i przekieruj
             localStorage.removeItem('token');
             window.location.href = '/login.html';
         }
     });
 
-    // Uruchom sprawdzenie przy starcie
-    checkAuth();
+    init();
 </script>
 
 </body>
