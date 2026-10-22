@@ -2,109 +2,74 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FossSpec - Panel Admina</title>
     <style>
-        * { box-sizing: border-box; font-family: sans-serif; }
-        body { background: #121212; color: #fff; margin: 0; padding: 2rem; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .card { background: #1e1e1e; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid #333; }
-        h2 { color: #4CAF50; margin-top: 0; }
-        input, textarea, select { width: 100%; padding: 0.8rem; margin-bottom: 1rem; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 4px; }
-        button { background: #4CAF50; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #45a049; }
-        .btn-delete { background: #ff5252; padding: 0.4rem 0.8rem; font-size: 0.85rem; }
-        .btn-delete:hover { background: #e04848; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #333; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        body { background: #121212; color: #fff; font-family: sans-serif; padding: 2rem; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #333; padding-bottom: 1rem; }
+        a { color: #4CAF50; text-decoration: none; }
+        button { background: #ff5252; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #ff1744; }
+        .card { background: #1e1e1e; padding: 1.5rem; border-radius: 8px; margin-top: 1rem; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>Panel Admina</h1>
-        <div>
-            <a href="/" style="color: #ccc; margin-right: 15px;">Zobacz Stronę</a>
-            <button id="logoutBtn" style="background: #555;">Wyloguj</button>
-        </div>
+<header>
+    <h2>Panel Admina</h2>
+    <div>
+        <a href="/">[Zobacz Stronę]</a>
+        <button id="logoutBtn" style="margin-left: 1rem;">Wyloguj</button>
     </div>
+</header>
 
-    <!-- FORMULARZ DODAWANIA -->
-    <div class="card">
-        <h2>Dodaj nowy wpis na stronę</h2>
-        <form id="addForm">
-            <input type="text" id="title" placeholder="Tytuł / Nazwa (np. Dell OptiPlex 7010)" required>
-            <input type="text" id="category" placeholder="Kategoria (np. Hardware, Software)" required>
-            <textarea id="description" rows="4" placeholder="Opis / Specyfikacja..." required></textarea>
-            <button type="submit">Dodaj na stronę</button>
-        </form>
-    </div>
+<div class="card">
+    <h3>Dodaj nowy wpis na stronę</h3>
+    <!-- Tutaj Twój formularz dodawania wpisu -->
+    <button>Dodaj na stronę</button>
+</div>
 
-    <!-- LISTA DODANYCH WPISÓW -->
-    <div class="card">
-        <h2>Istniejące wpisy</h2>
-        <div id="itemsList">Ładowanie...</div>
-    </div>
+<div class="card">
+    <h3>Istniejące wpisy</h3>
+    <p id="postsList">Ładowanie...</p>
 </div>
 
 <script>
+    // 1. Sprawdzenie uprawnień przy załadowaniu strony
     async function checkAuth() {
-        const res = await fetch('/api/check-auth');
-        const data = await res.json();
-        if (!data.loggedIn) window.location.href = '/login.html';
-        else loadItems();
-    }
-
-    async function loadItems() {
-        const res = await fetch('/api/items');
-        const items = await res.json();
-        const list = document.getElementById('itemsList');
-
-        if (items.length === 0) {
-            list.innerHTML = '<p style="color: #888;">Brak wpisów. Dodaj pierwszy powyżej!</p>';
-            return;
+        try {
+            const res = await fetch('/api/me', { // lub inny endpoint sprawdzający sesję, np. '/api/admin/status'
+                method: 'GET',
+                credentials: 'include' // ← KLUCZOWE: wysyła ciasteczko sesji do backendu
+            });
+            
+            if (!res.ok) {
+                // Jeśli nieautoryzowany, wyrzuć do logowania
+                window.location.href = '/login.html';
+            }
+        } catch (err) {
+            window.location.href = '/login.html';
         }
-
-        list.innerHTML = items.map(item => `
-            <div class="item-row">
-                <div>
-                    <strong>${item.title}</strong> <small style="color:#4CAF50">(${item.category})</small>
-                    <br><small style="color:#888">${item.date}</small>
-                </div>
-                <button onclick="deleteItem(${item.id})" class="btn-delete">Usuń</button>
-            </div>
-        `).join('');
     }
 
-    document.getElementById('addForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const title = document.getElementById('title').value;
-        const category = document.getElementById('category').value;
-        const description = document.getElementById('description').value;
-
-        const res = await fetch('/api/items', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, category, description })
-        });
-
-        if (res.ok) {
-            document.getElementById('addForm').reset();
-            loadItems();
-        }
-    });
-
-    async function deleteItem(id) {
-        if (!confirm('Na pewno usunąć ten wpis?')) return;
-        await fetch('/api/items/' + id, { method: 'DELETE' });
-        loadItems();
-    }
-
+    // 2. Obsługa wylogowywania
     document.getElementById('logoutBtn').addEventListener('click', async () => {
-        await fetch('/api/logout');
-        window.location.href = '/login.html';
+        try {
+            // Wywołaj backend, aby zniszczyć sesję
+            await fetch('/api/logout', { 
+                method: 'POST',
+                credentials: 'include' // ← KLUCZOWE: pozwala serwerowi wyczyścić ciasteczko
+            });
+        } catch (err) {
+            console.error('Błąd podczas wylogowywania', err);
+        } finally {
+            // Wyczyść dane lokalne i przekieruj
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
     });
 
+    // Uruchom sprawdzenie przy starcie
     checkAuth();
 </script>
 
