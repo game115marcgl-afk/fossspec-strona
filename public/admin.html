@@ -5,27 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FossSpec - Panel Admina</title>
     <style>
-        body { background: #121212; color: #fff; font-family: sans-serif; padding: 2rem; }
+        body { background: #121212; color: #fff; font-family: sans-serif; padding: 2rem; margin: 0; }
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #333; padding-bottom: 1rem; }
+        h2 { margin: 0; color: #4CAF50; }
         a { color: #4CAF50; text-decoration: none; }
-        button { background: #ff5252; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #ff1744; }
+        a:hover { text-decoration: underline; }
+        .nav-links { display: flex; gap: 1rem; align-items: center; }
+        button.logout-btn { background: #ff5252; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button.logout-btn:hover { background: #ff1744; }
         .card { background: #1e1e1e; padding: 1.5rem; border-radius: 8px; margin-top: 1rem; }
+        .card h3 { color: #4CAF50; margin-top: 0; }
     </style>
 </head>
 <body>
 
 <header>
     <h2>Panel Admina</h2>
-    <div>
-        <a href="/">[Zobacz Stronę]</a>
-        <button id="logoutBtn" style="margin-left: 1rem;">Wyloguj</button>
+    <div class="nav-links">
+        <a href="/">Strona główna</a>
+        <a href="/admin-users.html">Członkowie</a>
+        <button id="logoutBtn" class="logout-btn">Wyloguj</button>
     </div>
 </header>
 
 <div class="card">
     <h3>Dodaj nowy wpis na stronę</h3>
-    <!-- Tutaj Twój formularz dodawania wpisu -->
+    <p>Formularz dodawania wpisu...</p>
     <button>Dodaj na stronę</button>
 </div>
 
@@ -38,16 +43,25 @@
     // 1. Sprawdzenie uprawnień przy załadowaniu strony
     async function checkAuth() {
         try {
-            const res = await fetch('/api/me', { // lub inny endpoint sprawdzający sesję, np. '/api/admin/status'
+            const res = await fetch('/api/me', {
                 method: 'GET',
-                credentials: 'include' // ← KLUCZOWE: wysyła ciasteczko sesji do backendu
+                credentials: 'include' // ← KLUCZOWE: wysyła ciasteczko sesji
             });
-            
+
             if (!res.ok) {
-                // Jeśli nieautoryzowany, wyrzuć do logowania
+                // Nieautoryzowany → przekieruj do logowania
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const data = await res.json();
+            // Opcjonalnie: sprawdź czy to na pewno admin
+            if (data.user && data.user.role !== 'admin') {
+                alert('Brak uprawnień administratora!');
                 window.location.href = '/login.html';
             }
         } catch (err) {
+            console.error('Błąd sprawdzania sesji:', err);
             window.location.href = '/login.html';
         }
     }
@@ -55,13 +69,13 @@
     // 2. Obsługa wylogowywania
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         try {
-            // Wywołaj backend, aby zniszczyć sesję
-            await fetch('/api/logout', { 
+            // Wywołaj backend, aby zniszczyć sesję na serwerze
+            await fetch('/api/logout', {
                 method: 'POST',
                 credentials: 'include' // ← KLUCZOWE: pozwala serwerowi wyczyścić ciasteczko
             });
         } catch (err) {
-            console.error('Błąd podczas wylogowywania', err);
+            console.error('Błąd podczas wylogowywania:', err);
         } finally {
             // Wyczyść dane lokalne i przekieruj
             localStorage.removeItem('token');
