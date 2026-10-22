@@ -94,4 +94,4 @@ const me = (req, res) => {
 const logout = async (req, res, next) => {
     // LOGOWANIE WYLOGOWANIA (zanim zniszczymy sesję)
     if (req.session?.user?.id) {
-        await logActivity(req, "logout", "
+      await logActivity(req, "logout", "Wylogowano");
