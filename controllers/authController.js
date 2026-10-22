@@ -4,7 +4,7 @@ const User = require("../models/User");
 const AppError = require("../utils/AppError");
 const asyncHandler = require("../utils/asyncHandler");
 const { ensureString } = require("../utils/sanitizeInput");
-const { logActivity } = require("../middleware/activityLogger"); // <-- DODANE!
+const { logActivity } = require("../middleware/activityLogger");
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -33,7 +33,6 @@ const register = asyncHandler(async (req, res, next) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Każdy nowy użytkownik ma rolę "user"
     const role = "user";
 
     const user = await User.create({
@@ -46,13 +45,9 @@ const register = asyncHandler(async (req, res, next) => {
 
     req.session.user = { id: user._id, username: user.username, role: user.role };
     
-    // Wymuszony zapis sesji dla rejestracji
     req.session.save(async (err) => {
         if (err) return next(err);
-        
-        // Opcjonalnie: logowanie udanej rejestracji
-        await logActivity(req, "login_success", "Zarejestrowano i zalogowano nowe konto");
-        
+        await logActivity(req, "login_success", "Zarejestrowano i zalogowano");
         res.json({ success: true, message: "Konto utworzone!", user: req.session.user });
     });
 });
@@ -68,9 +63,6 @@ const login = asyncHandler(async (req, res, next) => {
     const user = await User.findOne({ username }).select("+password");
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
-        // Uwaga: logActivity pomija anonimowych, więc przy nieudanym logowaniu 
-        // musimy tymczasowo ustawić sesję lub zmodyfikować logger. 
-        // Na razie zostawiamy tak, aby nie blokować logowania.
         return next(new AppError("Błędny login lub hasło!", 401));
     }
 
@@ -78,10 +70,7 @@ const login = asyncHandler(async (req, res, next) => {
     
     req.session.save(async (err) => {
         if (err) return next(err);
-        
-        // LOGOWANIE UDANEGO LOGOWANIA
         await logActivity(req, "login_success", "Zalogowano pomyślnie");
-        
         res.json({ success: true, message: "Zalogowano!", user: req.session.user });
     });
 });
@@ -92,6 +81,15 @@ const me = (req, res) => {
 };
 
 const logout = async (req, res, next) => {
-    // LOGOWANIE WYLOGOWANIA (zanim zniszczymy sesję)
     if (req.session?.user?.id) {
-      await logActivity(req, "logout", "Wylogowano");
+        await logActivity(req, "logout", "Wylogowano");
+    }
+    
+    req.session.destroy((err) => {
+        if (err) return next(err);
+        res.clearCookie("connect.sid");
+        res.json({ success: true });
+    });
+};
+
+module.exports = { register, login, me, logout };
