@@ -45,22 +45,27 @@
 
         errorMsg.style.display = 'none';
 
-        const res = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', // ← KLUCZOWE: pozwala na zapis ciasteczka sesji
+                body: JSON.stringify({ username, password })
+            });
 
-        const data = await res.json();
+            const data = await res.json();
 
-        if (res.ok && data.success) {
-            // Zapisanie tokena sesji w pamięci przeglądarki
-            localStorage.setItem('token', data.token);
-
-            // Po pomyślnym zalogowaniu przejdź do panelu admina
-            window.location.href = '/admin.html';
-        } else {
-            errorMsg.textContent = data.message || 'Błąd logowania!';
+            if (res.ok && data.success) {
+                // Opcjonalnie, jeśli backend zwraca token, ale sesja jest trzymana w cookie
+                if (data.token) localStorage.setItem('token', data.token);
+                
+                window.location.href = '/admin.html';
+            } else {
+                errorMsg.textContent = data.message || 'Niepoprawny login lub hasło!';
+                errorMsg.style.display = 'block';
+            }
+        } catch (err) {
+            errorMsg.textContent = 'Błąd połączenia z serwerem.';
             errorMsg.style.display = 'block';
         }
     });
