@@ -1,5 +1,5 @@
 # FossSpec // Terminal Forum
-
+![Version](https://img.shields.io/badge/version-1.0.0--stable-green?style=flat-square)
 ![Status](https://img.shields.io/badge/status-stable%20%2F%20production-green?style=flat-square)
 ![Node.js](https://img.shields.io/badge/backend-Node.js%20%2F%20Express-blue?style=flat-square)
 ![Database](https://img.shields.io/badge/database-MongoDB%20Atlas-green?style=flat-square)
