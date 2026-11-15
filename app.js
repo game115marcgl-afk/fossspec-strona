@@ -84,11 +84,11 @@ app.use("/api", authRoutes);
 app.use("/api", (req, res) => {
     res.status(404).json({ success: false, message: "Nie znaleziono endpointu API." });
 });
-
-app.get(/.*/, (req, res) => {
+// Obsługa tylko żądań przeglądarki (HTML) dla ścieżek frontendowych
+app.get("*", (req, res, next) => {
+    if (req.originalUrl.startsWith("/api/")) {
+        return next();
+    }
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.use(errorHandler);
-
-module.exports = app;
