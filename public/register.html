@@ -42,6 +42,12 @@
 <div class="card">
     <h2>rejestracja.sh</h2>
     <form id="regForm">
+        <!-- 1. UKRYTA PUŁAPKA NA BOTY (HONEYPOT) -->
+        <div style="display: none !important;" aria-hidden="true">
+            <label for="website">Strona WWW</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+
         <div class="form-group">
             <label for="username">Twój Nick</label>
             <input type="text" id="username" required autocomplete="username" minlength="3" maxlength="30">
@@ -67,12 +73,18 @@
 </div>
 
 <script>
+    // 2. TIME-TRAP: Zapisujemy dokładny czas załadowania formularza w pamięci przeglądarki
+    const formLoadTime = Date.now();
+
     document.getElementById('regForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('username').value.trim();
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
         const ageConsent = document.getElementById('ageConsent').checked;
+        
+        // Pobieramy wartość ukrytego pola honeypot oraz czas
+        const website = document.getElementById('website').value; 
         const msg = document.getElementById('msg');
 
         msg.style.color = 'var(--text-primary)';
@@ -82,7 +94,14 @@
             const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, email, password, ageConsent })
+                body: JSON.stringify({ 
+                    username, 
+                    email, 
+                    password, 
+                    ageConsent, 
+                    website,       // Wędruje do backendu jako pułapka
+                    formLoadTime   // Wędruje do backendu do weryfikacji szybkości wysłania
+                })
             });
 
             const data = await res.json();
