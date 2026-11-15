@@ -79,19 +79,13 @@ app.use("/api/login", authLimiter);
 
 // Serwowanie plików statycznych z katalogu public
 app.use(express.static(path.join(__dirname, "public")));
-// Trasy API
-app.use("/api/categories", categoryRoutes);
-app.use("/api/threads", threadRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api", authRoutes);
-
-// Wszystko pod /api, co nie zostało obsłużone wyżej -> zwraca 404 dla API (bez regexów!)
+// Wszystko pod /api, co nie zostało obsłużone wyżej -> zwraca 404 dla API
 app.use("/api", (req, res, next) => {
     res.status(404).json({ success: false, message: "Nie znaleziono endpointu API." });
 });
 
-// Fallback dla wszystkich pozostałych adresów URL (serwuje front-end SPA)
-app.get("*", (req, res) => {
+// Fallback dla SPA z użyciem RegEx (omija błędy path-to-regexp w Node 24)
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
