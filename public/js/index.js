@@ -11,8 +11,10 @@ async function checkUser() {
 
         if (data.loggedIn) {
             currentUser = data.user;
+            // Dodano klasę badge-admin przy nazwie użytkownika w nagłówku, jeśli ma rolę admin
+            const userRoleBadge = data.user.role === 'admin' ? '<span class="badge-admin">[admin]</span>' : '';
             userBar.innerHTML = `
-                <span>Witaj, <strong>${escapeHtml(data.user.username)}</strong> ${data.user.role === 'admin' ? '<span style="color: var(--accent);">(Admin)</span>' : ''}</span>
+                <span>Witaj, <strong>${escapeHtml(data.user.username)}</strong>${userRoleBadge}</span>
                 <button id="logoutBtn" class="btn btn-danger">Wyloguj</button>
             `;
             document.getElementById('logoutBtn').addEventListener('click', logout);
@@ -60,6 +62,8 @@ async function loadThreads() {
 
         container.innerHTML = threads.map(t => {
             const authorName = t.author?.username || 'Nieznany';
+            // Sprawdzamy czy autor wątku posiada rolę administratora
+            const authorRole = t.author?.role === 'admin' ? '<span class="badge-admin">[admin]</span>' : '';
             const categoryName = t.category?.name || 'Bez kategorii';
             const date = new Date(t.createdAt);
 
@@ -70,22 +74,19 @@ async function loadThreads() {
                             <span class="badge">${escapeHtml(categoryName)}</span>
                             <a href="/thread.html?id=${t._id}" class="thread-title">${escapeHtml(t.title)}</a>
                         </div>
-                        <div class="meta">Autor: <strong>${escapeHtml(authorName)}</strong> &middot; ${date.toLocaleDateString('pl-PL')} ${date.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})} &middot; 💬 ${t.replyCount ?? 0}</div>
+                        <div class="meta">Autor: <strong>${escapeHtml(authorName)}</strong>${authorRole} &middot; ${date.toLocaleDateString('pl-PL')} ${date.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})} &middot; 💬 ${t.replyCount ?? 0}</div>
                         </div>
                     <div style="color: var(--accent); font-weight: bold;"><i class="fas fa-arrow-right"></i></div>
                 </div>
             `;
         }).join('');
-        // Uwaga: BEZ wywołania attachThreadRowEvents tutaj - listener jest
-        // rejestrowany raz w setupStaticListeners() (delegacja zdarzeń),
-        // więc odświeżanie listy nie dokłada kolejnych duplikatów.
     } catch (err) {
         console.error("Błąd ładowania wątków:", err);
     }
 }
 
 function handleThreadsContainerClick(e) {
-    if (e.target.closest('a')) return; // link sam obsłuży swoją nawigację
+    if (e.target.closest('a')) return;
     const row = e.target.closest('.thread-row');
     if (row) window.location.href = `/thread.html?id=${row.dataset.id}`;
 }
@@ -145,8 +146,6 @@ function setupStaticListeners() {
     document.getElementById('newThreadBtn').addEventListener('click', openModal);
     document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
     document.getElementById('createThreadForm').addEventListener('submit', handleCreateThread);
-    // Listener rejestrowany RAZ na kontenerze (delegacja zdarzeń) - działa
-    // poprawnie nawet dla wierszy dodanych później przez loadThreads().
     document.getElementById('threadsContainer').addEventListener('click', handleThreadsContainerClick);
 }
 
