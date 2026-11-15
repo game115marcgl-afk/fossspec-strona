@@ -238,5 +238,12 @@ function setupStaticListeners() {
         await loadThreads();
     } catch (err) {
         console.error("Krytyczny błąd inicjalizacji:", err);
+    } finally {
+        // Płynne wygaszenie ekranu ładowania po zakończeniu inicjalizacji
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 300);
+        }
     }
 })();
