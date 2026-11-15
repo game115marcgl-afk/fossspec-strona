@@ -3,37 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FossSpec - Logowanie Admina</title>
+    <title>FossSpec // Logowanie</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        * { box-sizing: border-box; font-family: sans-serif; }
-        body { background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-card { background: #1e1e1e; padding: 2rem; border-radius: 8px; width: 100%; max-width: 380px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h2 { margin-top: 0; text-align: center; color: #4CAF50; }
-        .form-group { margin-bottom: 1.2rem; }
-        label { display: block; margin-bottom: 0.4rem; font-size: 0.9rem; color: #ccc; }
-        input { width: 100%; padding: 0.7rem; border-radius: 4px; border: 1px solid #333; background: #2a2a2a; color: #fff; }
-        input:focus { border-color: #4CAF50; outline: none; }
-        button { width: 100%; padding: 0.8rem; background: #4CAF50; border: none; color: white; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        button:hover { background: #45a049; }
-        .error-msg { color: #ff5252; text-align: center; font-size: 0.9rem; margin-top: 1rem; display: none; }
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #2ea043;
+            --accent-dim: #238636;
+            --border: #30363d;
+            --danger: #f85149;
+            --font-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+        }
+
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text-primary); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: var(--card); padding: 28px; border-radius: 8px; width: 100%; max-width: 380px; border: 1px solid var(--border); box-shadow: 0 16px 32px rgba(0,0,0,0.5); }
+        h2 { margin-top: 0; text-align: center; color: var(--text-primary); font-family: var(--font-mono); font-size: 1.2rem; }
+        h2::before { content: "$ "; color: var(--accent); }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-secondary); font-family: var(--font-mono); }
+        input { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text-primary); font-size: 0.9rem; }
+        input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(46, 160, 67, 0.15); }
+        button { width: 100%; padding: 10px; background: var(--accent); border: none; color: white; border-radius: 6px; font-weight: 600; cursor: pointer; transition: .15s; }
+        button:hover { background: var(--accent-dim); }
+        .error-msg { color: var(--danger); text-align: center; font-size: 0.85rem; margin-top: 12px; display: none; font-family: var(--font-mono); }
+        .bottom-link { text-align: center; margin-top: 20px; font-size: 0.85rem; color: var(--text-secondary); font-family: var(--font-mono); }
+        .bottom-link a { color: var(--accent); text-decoration: none; }
+        .bottom-link a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
-<div class="login-card">
-    <h2>Panel Admina</h2>
+<div class="card">
+    <h2>logowanie.sh</h2>
     <form id="loginForm">
         <div class="form-group">
-            <label for="username">Login</label>
+            <label for="username">Login / Nick</label>
             <input type="text" id="username" required autocomplete="username">
         </div>
         <div class="form-group">
             <label for="password">Hasło</label>
             <input type="password" id="password" required autocomplete="current-password">
         </div>
-        <button type="submit">Zaloguj się</button>
+        <button type="submit">Autoryzuj sesję</button>
         <div id="errorMsg" class="error-msg">Niepoprawny login lub hasło!</div>
     </form>
+    <div class="bottom-link">
+        Nie masz konta? <a href="/register.html">Zarejestruj się</a>
+    </div>
 </div>
 
 <script>
@@ -56,7 +76,19 @@
             const data = await res.json();
 
             if (res.ok && data.success) {
-                window.location.href = '/admin.html';
+                // Sprawdzamy uprawnienia użytkownika, aby przekierować w odpowiednie miejsce
+                const meRes = await fetch('/api/me', { credentials: 'include' });
+                if (meRes.ok) {
+                    const meData = await meRes.json();
+                    // Jeśli admin -> panel, jeśli zwykły użytkownik -> strona główna
+                    if (meData.user && meData.user.role === 'admin') {
+                        window.location.href = '/admin.html';
+                    } else {
+                        window.location.href = '/';
+                    }
+                } else {
+                    window.location.href = '/';
+                }
             } else {
                 errorMsg.textContent = data.message || 'Niepoprawny login lub hasło!';
                 errorMsg.style.display = 'block';
