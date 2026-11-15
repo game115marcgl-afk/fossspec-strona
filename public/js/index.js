@@ -55,6 +55,7 @@ async function loadCategories() {
 async function loadThreads() {
     try {
         const container = document.getElementById('threadsContainer');
+        const date = new Date(t.createdAt);
         if (!container) return;
 
         if (!currentUser) {
