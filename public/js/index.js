@@ -8,6 +8,7 @@ async function checkUser() {
         const res = await fetch('/api/me');
         const data = await res.json();
         const userBar = document.getElementById('userBar');
+        if (!userBar) return;
 
         if (data.loggedIn) {
             currentUser = data.user;
@@ -16,7 +17,10 @@ async function checkUser() {
                 <span>Witaj, <strong>${escapeHtml(data.user.username)}</strong>${userRoleBadge}</span>
                 <button id="logoutBtn" class="btn btn-danger">Wyloguj</button>
             `;
-            document.getElementById('logoutBtn').addEventListener('click', logout);
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', logout);
+            }
         } else {
             userBar.innerHTML = `
                 <a href="/login.html" class="btn btn-outline">Zaloguj</a>
@@ -51,6 +55,7 @@ async function loadCategories() {
 async function loadThreads() {
     try {
         const container = document.getElementById('threadsContainer');
+        if (!container) return;
 
         if (!currentUser) {
             container.innerHTML = `
@@ -119,30 +124,37 @@ function openModal() {
         alert('Brak kategorii na forum - skontaktuj się z administratorem.');
         return;
     }
-    document.getElementById('threadModal').style.display = 'flex';
+    const modal = document.getElementById('threadModal');
+    if (modal) modal.style.display = 'flex';
 }
 
 function closeModal() {
-    document.getElementById('threadModal').style.display = 'none';
+    const modal = document.getElementById('threadModal');
+    if (modal) modal.style.display = 'none';
 }
 
 async function handleCreateThread(e) {
     e.preventDefault();
-    const title = document.getElementById('title').value;
-    const category = document.getElementById('category').value;
-    const content = document.getElementById('content').value;
+    const titleInput = document.getElementById('title');
+    const categorySelect = document.getElementById('category');
+    const contentTextarea = document.getElementById('content');
 
     const res = await fetch('/api/threads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, category, content })
+        body: JSON.stringify({
+            title: titleInput ? titleInput.value : '',
+            category: categorySelect ? categorySelect.value : '',
+            content: contentTextarea ? contentTextarea.value : ''
+        })
     });
 
     const data = await res.json();
 
     if (res.ok) {
         closeModal();
-        document.getElementById('createThreadForm').reset();
+        const form = document.getElementById('createThreadForm');
+        if (form) form.reset();
         loadThreads();
     } else {
         alert(data.message || 'Błąd podczas dodawania wątku!');
@@ -161,10 +173,25 @@ function escapeHtml(str) {
 }
 
 function setupStaticListeners() {
-    document.getElementById('newThreadBtn').addEventListener('click', openModal);
-    document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-    document.getElementById('createThreadForm').addEventListener('submit', handleCreateThread);
-    document.getElementById('threadsContainer').addEventListener('click', handleThreadsContainerClick);
+    const newThreadBtn = document.getElementById('newThreadBtn');
+    if (newThreadBtn) {
+        newThreadBtn.addEventListener('click', openModal);
+    }
+
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    if (cancelModalBtn) {
+        cancelModalBtn.addEventListener('click', closeModal);
+    }
+
+    const createThreadForm = document.getElementById('createThreadForm');
+    if (createThreadForm) {
+        createThreadForm.addEventListener('submit', handleCreateThread);
+    }
+
+    const threadsContainer = document.getElementById('threadsContainer');
+    if (threadsContainer) {
+        threadsContainer.addEventListener('click', handleThreadsContainerClick);
+    }
 }
 
 (async function init() {
