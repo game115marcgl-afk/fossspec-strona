@@ -56,20 +56,22 @@ async function loadThreads() {
     try {
         const container = document.getElementById('threadsContainer');
         const date = new Date(t.createdAt);
+        const authorId = t.author?._id || t.author;
+            const isAuthor = currentUser && (authorId === currentUser._id || authorId === currentUser.id);
+            const isAdmin = currentUser && currentUser.role === 'admin';
+            const canDelete = isAuthor || isAdmin;
+
+            const deleteBtnHtml = canDelete 
+                ? `<button class="btn btn-danger delete-thread-btn" data-id="${t._id}" style="padding: 2px 8px; font-size: 12px; margin-left: 10px;" title="Usuń wątek"><i class="fas fa-trash"></i> Usuń</button>` 
+                : '';
         if (!container) return;
 
         if (!currentUser) {
             container.innerHTML = `
-                <div class="empty-state">
-                    <p>[!] Dostęp ograniczony. Musisz się zalogować, aby przeglądać bufor dyskusji.</p>
-                    <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
-                        <a href="/login.html" class="btn btn-outline" style="display: inline-block;">Zaloguj</a>
-                        <a href="/register.html" class="btn btn-fill" style="display: inline-block;">Zarejestruj</a>
-                    </div>
+                <div class="meta">Autor: <strong>${escapeHtml(authorName)}</strong>${authorRole} &middot; ${date.toLocaleDateString('pl-PL')} ${date.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})} &middot; 💬 ${t.replyCount ?? 0}</div>
+                        </div>
+                    <div style="color: var(--accent); font-weight: bold;"><i class="fas fa-arrow-right"></i></div>
                 </div>
-            `;
-            return;
-        }
 
         const res = await fetch('/api/threads');
         
