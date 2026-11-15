@@ -15,7 +15,6 @@ const sanitizeBody = require("./middleware/sanitize");
 
 const app = express();
 
-// Wymagane dla poprawnej obsługi HTTPS i sesji za reverse proxy (np. Render, Nginx)
 app.set("trust proxy", 1);
 
 app.use(
@@ -45,30 +44,28 @@ if (!process.env.MONGO_URI) {
     throw new Error("Brak MONGO_URI w zmiennych środowiskowych!");
 }
 
-// Konfiguracja trwałej i stabilnej sesji
 app.use(
     session({
         name: "fossspec.sid",
         store: MongoStore.create({
             mongoUrl: process.env.MONGO_URI,
             collectionName: "sessions",
-            ttl: 60 * 60 * 24 * 7, // Czas życia w bazie: 7 dni
+            ttl: 60 * 60 * 24 * 7,
             autoRemove: "native"
         }),
         secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
-        rolling: true, // Odświeża ważność sesji przy każdym żądaniu
+        rolling: true,
         cookie: {
-            secure: "auto", // Automatycznie HTTPS na produkcji (za proxy) i HTTP lokalnie
+            secure: "auto",
             httpOnly: true,
             sameSite: "lax",
-            maxAge: 1000 * 60 * 60 * 24 * 7 // 7 dni
+            maxAge: 1000 * 60 * 60 * 24 * 7
         }
     })
 );
 
-// Limity prób logowania i rejestracji
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 20,
@@ -77,20 +74,21 @@ const authLimiter = rateLimit({
 app.use("/api/register", authLimiter);
 app.use("/api/login", authLimiter);
 
-// Serwowanie plików statycznych z katalogu public
 app.use(express.static(path.join(__dirname, "public")));
-// Wszystko pod /api, co nie zostało obsłużone wyżej -> zwraca 404 dla API
-app.use("/api", (req, res, next) => {
+
+app.use("/api/categories", categoryRoutes);
+app.use("/api/threads", threadRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api", authRoutes);
+
+app.use("/api", (req, res) => {
     res.status(404).json({ success: false, message: "Nie znaleziono endpointu API." });
 });
 
-// Fallback dla SPA z użyciem RegEx (omija błędy path-to-regexp w Node 24)
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Globalna obsługa błędów
 app.use(errorHandler);
 
-
-
+module.exports = app;
