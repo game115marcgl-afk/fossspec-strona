@@ -1,51 +1,38 @@
-> [!WARNING]
-> **PROJEKT W FAZIE BETA / INTENSYWNY ROZWÓJ**
-> Instancja demonstracyjna / forum jest obecnie na etapie wczesnych testów. 
-> Prosimy **nie rejestrować kont ani nie wprowdzać danych**, ponieważ baza danych może zostać w dowolnym momencie wyczyszczona, a system zawiera krytyczne błędy.
->
-> **Współpraca:**
-> Jeśli jesteś programistą i chcesz pomóc w rozwoju kodu lub zgłaszaniu łatek, skontaktuj się ze mną przez adres e-mail podany w opisie mojego kanału YouTube.
-# Forum FossSpec
+# FossSpec // Terminal Forum
 
-W pełni funkcjonalne forum społecznościowe skupione wokół technologii Open Source i Linuxa.
+![Status](https://img.shields.io/badge/status-stable%20%2F%20production-green?style=flat-square)
+![Node.js](https://img.shields.io/badge/backend-Node.js%20%2F%20Express-blue?style=flat-square)
+![Database](https://img.shields.io/badge/database-MongoDB%20Atlas-green?style=flat-square)
+![Security](https://img.shields.io/badge/security-Zero%20Trust%20%2F%20CSP-red?style=flat-square)
 
-## 🚀 Technologie
-- **Backend:** Node.js, Express.js
-- **Baza danych:** MongoDB (Atlas)
-- **Frontend:** HTML5, CSS3, Vanilla JavaScript
-- **Bezpieczeństwo:** Helmet.js, express-session, express-rate-limit
+**FossSpec** to lekka, minimalistyczna i w pełni bezpieczna platforma forumowa zaprojektowana w surowym, inżynieryjnym stylu terminalowym. Projekt powstał z myślą o pełnej kontroli nad kodem, maksymalnej prywatności oraz architekturze pozbawionej zbędnego bloatware'u.
 
-## 🛠 Instalacja i uruchomienie lokalne
+---
+
+## 🚀 Główne funkcje
+
+* **Terminalowy interfejs (UI/UX):** Ciemny motyw w klimacie CLI, zoptymalizowana czytelność, dynamiczny wskaźnik sesji oraz profesjonalny ekran startowy (*Kernel Boot*).
+* **Bufor dyskusji i wątki:** System tworzenia, przeglądania i filtrowania wątków z podziałem na kategorie.
+* **Model Zero Trust i Moderacja:** 
+  * Pełna izolacja treści dla niezalogowanych użytkowników.
+  * System uprawnień (RBAC): użytkownicy mogą usuwać własne wątki, a administratorzy (`[admin]`) posiadają pełne uprawnienia moderacyjne.
+* **Bezpieczeństwo produkcyjne:** Ochrona przed atakami XSS (`escapeHtml`), nagłówki bezpieczeństwa Helmet (CSP), Rate Limiting oraz bezpieczne zarządzanie sesjami w bazie danych.
+
+---
+
+## 🛠️ Stos technologiczny
+
+* **Backend:** Node.js, Express.js
+* **Baza danych:** MongoDB Atlas (Mongoose, `connect-mongo`)
+* **Frontend:** Czysty JavaScript (Vanilla JS), HTML5, CSS3, FontAwesome
+* **Bezpieczeństwo i sesje:** `express-session`, `helmet`, `express-rate-limit`
+* **Hosting / Chmura:** Render (automatyczne wdrażanie i certyfikacja SSL/HTTPS)
+
+---
+
+## ⚙️ Uruchomienie lokalne
 
 1. Sklonuj repozytorium:
    ```bash
-   git clone https://github.com/game115marcgl-afk/fossspec-strona.git
-   cd fossspec-strona
-   ```
-
-2. Zainstaluj zależności:
-   ```bash
-   yarn install
-   ```
-
-3. Skonfiguruj zmienne środowiskowe:
-   - Utwórz plik `.env` w głównym folderze i dodaj:
-     ```env
-     PORT=3000
-     MONGO_URI=twój_link_do_mongodb
-     SESSION_SECRET=losowy_długi_ciąg_znaków
-     ```
-
-4. Uruchom serwer:
-   ```bash
-   node server.js
-   ```
-
-## 📁 Struktura projektu
-- `/public` - pliki frontendowe (HTML, CSS, JS).
-- `/src` - logika backendowa, modele bazy danych i middleware.
-- `/server.js` - punkt wejścia aplikacji.
-
-## 🔐 Uwagi dotyczące bezpieczeństwa
-- Aplikacja wykorzystuje **Helmet.js** do zabezpieczenia nagłówków HTTP oraz polityki **CSP (Content Security Policy)**.
-- Skrypty JS zostały wydzielone do osobnych plików w `/public/js/`, aby zapewnić zgodność z polityką bezpieczeństwa przeglądarek.
+   git clone [https://github.com/TwojLogin/FossSpec.git](https://github.com/TwojLogin/FossSpec.git)
+   cd FossSpec
