@@ -1,345 +1,176 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FossSpec // Forum Techniczne</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        :root {
-            --bg: #0d1117; /* Głęboki grafit w stylu GitHub Dark / Terminal */
-            --card: #161b22;
-            --card-hover: #1f6feb10;
-            --text-primary: #c9d1d9;
-            --text-secondary: #8b949e;
-            --accent: #2ea043; /* Developer green */
-            --accent-dim: #238636;
-            --border: #30363d;
-            --danger: #f85149;
-            --font-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+"use strict";
+
+let currentUser = null;
+let categories = [];
+
+async function checkUser() {
+    try {
+        const res = await fetch('/api/me');
+        const data = await res.json();
+        const userBar = document.getElementById('userBar');
+
+        if (data.loggedIn) {
+            currentUser = data.user;
+            const userRoleBadge = data.user.role === 'admin' ? '<span class="badge-admin">[admin]</span>' : '';
+            userBar.innerHTML = `
+                <span>Witaj, <strong>${escapeHtml(data.user.username)}</strong>${userRoleBadge}</span>
+                <button id="logoutBtn" class="btn btn-danger">Wyloguj</button>
+            `;
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+        } else {
+            userBar.innerHTML = `
+                <a href="/login.html" class="btn btn-outline">Zaloguj</a>
+                <a href="/register.html" class="btn btn-fill">Zarejestruj</a>
+            `;
+        }
+    } catch (err) {
+        console.error("Błąd sprawdzania użytkownika:", err);
+    }
+}
+
+async function loadCategories() {
+    try {
+        const res = await fetch('/api/categories');
+        categories = await res.json();
+        const select = document.getElementById('category');
+
+        if (!Array.isArray(categories) || categories.length === 0) {
+            if (select) select.innerHTML = '<option value="" disabled selected>Brak kategorii - skontaktuj się z adminem</option>';
+            return;
         }
 
-        .badge-admin {
-            background: rgba(46, 160, 67, 0.15);
-            color: var(--accent);
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-family: var(--font-mono);
-            font-weight: 600;
-            border: 1px solid rgba(46, 160, 67, 0.3);
-            margin-left: 6px;
-            display: inline-block;
-            vertical-align: middle;
+        if (select) {
+            select.innerHTML = '<option value="" disabled selected>Wybierz kategorię...</option>' +
+                categories.map(c => `<option value="${c._id}">${c.icon ? c.icon + ' ' : ''}${escapeHtml(c.name)}</option>`).join('');
+        }
+    } catch (err) {
+        console.error("Błąd ładowania kategorii:", err);
+    }
+}
+
+async function loadThreads() {
+    try {
+        const container = document.getElementById('threadsContainer');
+
+        // Blokada widoku dla niezalogowanych gości
+        if (!currentUser) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <p>[!] Dostęp ograniczony. Musisz się zalogować, aby przeglądać bufor dyskusji.</p>
+                    <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                        <a href="/login.html" class="btn btn-outline" style="display: inline-block;">Zaloguj</a>
+                        <a href="/register.html" class="btn btn-fill" style="display: inline-block;">Zarejestruj</a>
+                    </div>
+                </div>
+            `;
+            return;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        const res = await fetch('/api/threads');
+        
+        if (res.status === 401) {
+            container.innerHTML = '<p class="empty-state">Sesja wygasła. Zaloguj się ponownie.</p>';
+            return;
         }
 
-        body {
-            background: var(--bg);
-            color: var(--text-primary);
-            font-family: system-ui, -apple-system, BlinkMacSystemFont,
-                "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.5;
-            min-height: 100vh;
+        const threads = await res.json();
+
+        if (threads.length === 0) {
+            container.innerHTML = '<p class="empty-state">Brak wątków na forum. Bądź pierwszy i załóż nowy wątek!</p>';
+            return;
         }
 
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
+        container.innerHTML = threads.map(t => {
+            const authorName = t.author?.username || 'Nieznany';
+            const authorRole = t.author?.role === 'admin' ? '<span class="badge-admin">[admin]</span>' : '';
+            const categoryName = t.category?.name || 'Bez kategorii';
+            const date = new Date(t.createdAt);
 
-        header {
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            padding: 12px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
+            return `
+                <div class="thread-row" data-id="${t._id}">
+                    <div>
+                        <div>
+                            <span class="badge">${escapeHtml(categoryName)}</span>
+                            <a href="/thread.html?id=${t._id}" class="thread-title">${escapeHtml(t.title)}</a>
+                        </div>
+                        <div class="meta">Autor: <strong>${escapeHtml(authorName)}</strong>${authorRole} &middot; ${date.toLocaleDateString('pl-PL')} ${date.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})} &middot; 💬 ${t.replyCount ?? 0}</div>
+                        </div>
+                    <div style="color: var(--accent); font-weight: bold;"><i class="fas fa-arrow-right"></i></div>
+                </div>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error("Błąd ładowania wątków:", err);
+    }
+}
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: var(--font-mono);
-            color: var(--accent);
-            font-size: 1rem;
-            font-weight: 600;
-        }
+function handleThreadsContainerClick(e) {
+    if (e.target.closest('a')) return;
+    const row = e.target.closest('.thread-row');
+    if (row) window.location.href = `/thread.html?id=${row.dataset.id}`;
+}
 
-        .user-bar {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: .85rem;
-            font-family: var(--font-mono);
-        }
+function openModal() {
+    if (!currentUser) {
+        alert('Musisz być zalogowany, aby stworzyć wątek!');
+        window.location.href = '/login.html';
+        return;
+    }
+    if (categories.length === 0) {
+        alert('Brak kategorii na forum - skontaktuj się z administratorem.');
+        return;
+    }
+    document.getElementById('threadModal').style.display = 'flex';
+}
 
-        .btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: .85rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: 1px solid transparent;
-            transition: .15s ease;
-            font-family: inherit;
-        }
+function closeModal() {
+    document.getElementById('threadModal').style.display = 'none';
+}
 
-        .btn-outline {
-            background: transparent;
-            color: var(--text-primary);
-            border-color: var(--border);
-        }
+async function handleCreateThread(e) {
+    e.preventDefault();
+    const title = document.getElementById('title').value;
+    const category = document.getElementById('category').value;
+    const content = document.getElementById('content').value;
 
-        .btn-outline:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-            background: rgba(46, 160, 67, 0.05);
-        }
+    const res = await fetch('/api/threads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, category, content })
+    });
 
-        .btn-fill {
-            background: var(--accent);
-            color: #ffffff;
-        }
+    const data = await res.json();
 
-        .btn-fill:hover {
-            background: var(--accent-dim);
-        }
+    if (res.ok) {
+        closeModal();
+        document.getElementById('createThreadForm').reset();
+        loadThreads();
+    } else {
+        alert(data.message || 'Błąd podczas dodawania wątku!');
+    }
+}
 
-        .btn-danger {
-            background: var(--danger);
-            color: #fff;
-        }
+async function logout() {
+    await fetch('/api/logout');
+    window.location.reload();
+}
 
-        .btn-danger:hover {
-            background: #da3633;
-        }
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str ?? '';
+    return div.innerHTML;
+}
 
-        main {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 32px 20px 60px;
-        }
+function setupStaticListeners() {
+    document.getElementById('newThreadBtn').addEventListener('click', openModal);
+    document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+    document.getElementById('createThreadForm').addEventListener('submit', handleCreateThread);
+    document.getElementById('threadsContainer').addEventListener('click', handleThreadsContainerClick);
+}
 
-        .section-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .section-top h1 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            font-family: var(--font-mono);
-            color: var(--text-primary);
-        }
-
-        .section-top h1::before {
-            content: "$ ";
-            color: var(--accent);
-        }
-
-        .card {
-            background: var(--card);
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-
-        .thread-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            transition: background .15s ease;
-        }
-
-        .thread-row:last-child {
-            border-bottom: none;
-        }
-
-        .thread-row:hover {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .badge {
-            background: rgba(46, 160, 67, 0.15);
-            color: var(--accent);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: .75rem;
-            font-family: var(--font-mono);
-            font-weight: 500;
-            margin-right: 8px;
-            display: inline-block;
-            border: 1px solid rgba(46, 160, 67, 0.3);
-        }
-
-        .thread-title {
-            color: var(--text-primary);
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .thread-title:hover {
-            color: var(--accent);
-            text-decoration: underline;
-        }
-
-        .meta {
-            color: var(--text-secondary);
-            font-size: .8rem;
-            margin-top: 4px;
-            font-family: var(--font-mono);
-        }
-
-        .meta strong {
-            color: var(--text-primary);
-        }
-
-        .empty-state {
-            padding: 40px 20px;
-            color: var(--text-secondary);
-            text-align: center;
-            font-family: var(--font-mono);
-            font-size: .9rem;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(1, 4, 9, 0.8);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 16px;
-        }
-
-        .modal-content {
-            background: var(--card);
-            padding: 24px;
-            border-radius: 8px;
-            width: 100%;
-            max-width: 480px;
-            border: 1px solid var(--border);
-            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-content h2 {
-            color: var(--text-primary);
-            margin-bottom: 16px;
-            font-size: 1.1rem;
-            font-family: var(--font-mono);
-        }
-
-        .modal-content h2::before {
-            content: "> ";
-            color: var(--accent);
-        }
-
-        input,
-        select,
-        textarea {
-            width: 100%;
-            padding: 10px 12px;
-            margin-bottom: 14px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text-primary);
-            border-radius: 6px;
-            font-size: .9rem;
-            font-family: inherit;
-        }
-
-        input:focus,
-        select:focus,
-        textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(46, 160, 67, 0.15);
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        @media (max-width: 640px) {
-            header {
-                padding: 10px 16px;
-            }
-            main {
-                padding: 20px 12px 40px;
-            }
-            .thread-row {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .section-top .btn {
-                width: 100%;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<header>
-    <div class="logo">
-        <span>fossspec@forum:~$ <span style="color: var(--text-secondary); font-size: 0.85rem;">[v0.1.0-dev]</span></span>
-    </div>
-    <div id="userBar" class="user-bar">
-        <span style="color: var(--text-secondary);">[ inicjalizuj sesję... ]</span>
-    </div>
-</header>
-
-<main>
-    <div class="section-top">
-        <h1>dyskusje.log</h1>
-        <button id="newThreadBtn" class="btn btn-fill"><i class="fas fa-plus"></i> Nowy Wątek</button>
-    </div>
-
-    <div id="threadsContainer" class="card">
-        <p class="empty-state">Pobieranie bufora wątków...</p>
-    </div>
-</main>
-
-<div id="threadModal" class="modal">
-    <div class="modal-content">
-        <h2>Utwórz Nowy Wpis</h2>
-        <form id="createThreadForm">
-            <input type="text" id="title" placeholder="Tytuł wątku" maxlength="150" required>
-            <select id="category" required>
-                <option value="" disabled selected>Wybierz kategorię...</option>
-            </select>
-            <textarea id="content" rows="5" placeholder="Treść / Opis problemu..." maxlength="10000" required></textarea>
-            <div class="modal-actions">
-                <button type="button" id="cancelModalBtn" class="btn btn-outline">Anuluj</button>
-                <button type="submit" class="btn btn-fill">Wyślij do bufora</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script src="/js/index.js"></script>
-
-</body>
-</html>
+(async function init() {
+    setupStaticListeners();
+    await checkUser();
+    await loadCategories();
+    await loadThreads();
+})();
