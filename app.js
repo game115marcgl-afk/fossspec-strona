@@ -1,8 +1,7 @@
-
 "use strict";
 const express = require("express");
 const session = require("express-session");
-const MongoStore = require("connect-mongo"); // ← DODANE: do trwałego przechowywania sesji
+const MongoStore = require("connect-mongo");
 const path = require("path");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
@@ -16,7 +15,7 @@ const sanitizeBody = require("./middleware/sanitize");
 
 const app = express();
 
-// Render wymaga trust proxy dla sesji i ciasteczek
+// Wymagane dla poprawnej obsługi HTTPS i sesji za reverse proxy (np. Render, Nginx)
 app.set("trust proxy", 1);
 
 app.use(
@@ -25,7 +24,7 @@ app.use(
             useDefaults: true,
             directives: {
                 "default-src": ["'self'"],
-                "script-src": ["'self'", "'unsafe-inline'"], // Pozwala na nasz inline JS
+                "script-src": ["'self'", "'unsafe-inline'"],
                 "connect-src": ["'self'"],
                 "img-src": ["'self'", "data:", "https:"],
                 "style-src": ["'self'", "https:", "'unsafe-inline'"],
@@ -42,21 +41,26 @@ if (!process.env.SESSION_SECRET) {
     throw new Error("Brak SESSION_SECRET w zmiennych środowiskowych!");
 }
 
-// ✅ POPRAWIONA KONFIGURACJA SESJI
+if (!process.env.MONGO_URI) {
+    throw new Error("Brak MONGO_URI w zmiennych środowiskowych!");
+}
+
+// Konfiguracja trwałej i stabilnej sesji
 app.use(
     session({
+        name: "fossspec.sid",
         store: MongoStore.create({
-            mongoUrl: process.env.MONGO_URI, // Upewnij się, że masz to w .env
+            mongoUrl: process.env.MONGO_URI,
             collectionName: "sessions",
+            ttl: 60 * 60 * 24 * 7, // Czas życia w bazie: 7 dni
+            autoRemove: "native"
         }),
         secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
-        rolling: true, // Odświeża czas ważności ciasteczka przy każdej aktywności
+        rolling: true, // Odświeża ważność sesji przy każdym żądaniu
         cookie: {
-            // secure: true jest wymagane na Renderze (HTTPS). 
-            // Na localhost możesz tymczasowo dać false, ale production musi być true.
-            secure: process.env.NODE_ENV === "production", 
+            secure: "auto", // Automatycznie HTTPS na produkcji (za proxy) i HTTP lokalnie
             httpOnly: true,
             sameSite: "lax",
             maxAge: 1000 * 60 * 60 * 24 * 7 // 7 dni
@@ -64,7 +68,7 @@ app.use(
     })
 );
 
-// Limity
+// Limity prób logowania i rejestracji
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 20,
@@ -73,16 +77,24 @@ const authLimiter = rateLimit({
 app.use("/api/register", authLimiter);
 app.use("/api/login", authLimiter);
 
-// Statyczne
+// Serwowanie plików statycznych z katalogu public
 app.use(express.static(path.join(__dirname, "public")));
 
-// Trasy
+// Trasy API
 app.use("/api/categories", categoryRoutes);
 app.use("/api/threads", threadRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api", authRoutes);
 
-app.use(notFound);
+// Jeśli zapytanie pod /api nie istnieje -> zwróć 404 z middleware
+app.use("/api/*", notFound);
+
+// Fallback dla wszystkich pozostałych adresów URL (eliminuje błędy 404 na podstronach)
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Globalna obsługa błędów
 app.use(errorHandler);
 
 module.exports = app;
