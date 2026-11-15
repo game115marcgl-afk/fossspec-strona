@@ -3,90 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FossSpec Forum - Rejestracja</title>
+    <title>FossSpec // Rejestracja</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        * { box-sizing: border-box; font-family: sans-serif; }
-        body { background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: #1e1e1e; padding: 2rem; border-radius: 8px; width: 100%; max-width: 380px; border: 1px solid #333; }
-        h2 { color: #4CAF50; margin-top: 0; text-align: center; }
-        input { width: 100%; padding: 0.8rem; margin-bottom: 1rem; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 4px; }
-        input:focus { border-color: #4CAF50; outline: none; }
-        button { width: 100%; background: #4CAF50; color: white; border: none; padding: 0.8rem; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        button:hover { background: #45a049; }
-        .msg { margin-top: 1rem; text-align: center; font-size: 0.9rem; min-height: 1.2em; }
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #2ea043;
+            --accent-dim: #238636;
+            --border: #30363d;
+            --danger: #f85149;
+            --font-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+        }
+
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text-primary); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .card { background: var(--card); padding: 28px; border-radius: 8px; width: 100%; max-width: 400px; border: 1px solid var(--border); box-shadow: 0 16px 32px rgba(0,0,0,0.5); }
+        h2 { margin-top: 0; text-align: center; color: var(--text-primary); font-family: var(--font-mono); font-size: 1.2rem; }
+        h2::before { content: "$ "; color: var(--accent); }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; font-size: 0.8rem; color: var(--text-secondary); font-family: var(--font-mono); }
+        input { width: 100%; padding: 9px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text-primary); font-size: 0.9rem; }
+        input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(46, 160, 67, 0.15); }
+        .checkbox-group { display: flex; align-items: flex-start; gap: 8px; margin: 14px 0; font-size: 0.85rem; color: var(--text-secondary); }
+        .checkbox-group input { width: auto; margin-top: 3px; }
+        button { width: 100%; padding: 10px; background: var(--accent); border: none; color: white; border-radius: 6px; font-weight: 600; cursor: pointer; transition: .15s; }
+        button:hover { background: var(--accent-dim); }
+        .msg { margin-top: 12px; text-align: center; font-size: 0.85rem; min-height: 1.2em; font-family: var(--font-mono); }
+        .bottom-link { text-align: center; margin-top: 18px; font-size: 0.85rem; color: var(--text-secondary); font-family: var(--font-mono); }
+        .bottom-link a { color: var(--accent); text-decoration: none; }
+        .bottom-link a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Dołącz do Forum FossSpec</h2>
+    <h2>rejestracja.sh</h2>
     <form id="regForm">
-        <input type="text" id="username" placeholder="Twój Nick" required autocomplete="username" minlength="3" maxlength="30">
-        <input type="email" id="email" placeholder="Adres Email" required autocomplete="email">
-        <input type="password" id="password" placeholder="Hasło (min. 8 znaków)" required autocomplete="new-password" minlength="8">
-        <input type="password" id="password2" placeholder="Powtórz hasło" required autocomplete="new-password" minlength="8">
-        <button type="submit">Załóż Konto</button>
+        <div class="form-group">
+            <label for="username">Twój Nick</label>
+            <input type="text" id="username" required autocomplete="username" minlength="3" maxlength="30">
+        </div>
+        <div class="form-group">
+            <label for="email">Adres Email</label>
+            <input type="email" id="email" required autocomplete="email">
+        </div>
+        <div class="form-group">
+            <label for="password">Hasło (min. 8 znaków)</label>
+            <input type="password" id="password" required autocomplete="new-password" minlength="8">
+        </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="ageConsent" required>
+            <label for="ageConsent" style="display:inline; color:var(--text-primary);">Potwierdzam, że spełniam wymagania wiekowe regulaminu.</label>
+        </div>
+        <button type="submit">Inicjalizuj Konto</button>
         <div id="msg" class="msg"></div>
     </form>
-    <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: #aaa;">
-        Masz już konto? <a href="/login.html" style="color: #4CAF50;">Zaloguj się</a>
-    </p>
+    <div class="bottom-link">
+        Masz już konto? <a href="/login.html">Zaloguj się</a>
+    </div>
 </div>
 
 <script>
     document.getElementById('regForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-  const register = asyncHandler(async (req, res, next) => {
-    const username = ensureString(req.body.username);
-    const email = ensureString(req.body.email)?.toLowerCase();
-    const password = ensureString(req.body.password);
-    const ageConsent = req.body.ageConsent === true;
+        const username = document.getElementById('username').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const ageConsent = document.getElementById('ageConsent').checked;
+        const msg = document.getElementById('msg');
 
-    if (!username || !email || !password) {
-        return next(new AppError("Wypełnij wszystkie pola!", 400));
-    }
-    if (!ageConsent) {
-        return next(new AppError("Musisz potwierdzić swój wiek, aby założyć konto.", 400));
-    }
-    if (username.length < 3 || username.length > 30) {
-        return next(new AppError("Nick musi mieć od 3 do 30 znaków.", 400));
-    }
-    if (!EMAIL_REGEX.test(email)) {
-        return next(new AppError("Nieprawidłowy adres e-mail.", 400));
-    }
-    if (password.length < 8) {
-        return next(new AppError("Hasło musi mieć minimum 8 znaków.", 400));
-    }
+        msg.style.color = 'var(--text-primary)';
+        msg.textContent = 'Przetwarzanie danych...';
 
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-    if (existingUser) {
-        return next(new AppError("Użytkownik o takim nicku lub emailu już istnieje!", 400));
-    }
+        try {
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password, ageConsent })
+            });
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    const hashedCode = await bcrypt.hash(code, 10);
+            const data = await res.json();
 
-    const user = await User.create({
-        username,
-        email,
-        password: hashedPassword,
-        role: "user",
-        isVerified: false,
-        verifyCode: hashedCode,
-        verifyCodeExpiresAt: new Date(Date.now() + 60 * 60 * 1000)
+            if (res.ok && data.success) {
+                msg.style.color = 'var(--accent)';
+                msg.textContent = data.message || 'Konto utworzone! Przekierowywanie...';
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 2000);
+            } else {
+                msg.style.color = 'var(--danger)';
+                msg.textContent = data.message || 'Błąd rejestracji.';
+            }
+        } catch (err) {
+            msg.style.color = 'var(--danger)';
+            msg.textContent = 'Błąd połączenia z serwerem.';
+        }
     });
-
-    try {
-        await sendVerificationEmail(email, username, code);
-    } catch (mailErr) {
-        console.error("Blad wysylki e-maila:", mailErr.message);
-        await User.deleteOne({ _id: user._id });
-        return next(new AppError("Nie udało się wysłać e-maila. Spróbuj później.", 500));
-    }
-
-    res.status(201).json({ success: true, message: "Konto utworzone! Sprawdź e-mail.", email });
-});
 </script>
 
 </body>
