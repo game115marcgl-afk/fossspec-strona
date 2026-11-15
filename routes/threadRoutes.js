@@ -9,8 +9,9 @@ const {
     deleteThread
 } = require("../controllers/threadController");
 
-router.get("/", getThreads);
-router.get("/:id", getThreadById);
+// DODANO requireAuth do routingu GET, aby chronić dostęp przed gośćmi
+router.get("/", requireAuth, getThreads);
+router.get("/:id", requireAuth, getThreadById);
 router.post("/", requireAuth, createThread);
 router.post("/:id/replies", requireAuth, createReply);
 router.delete("/:id", requireAuth, deleteThread);
