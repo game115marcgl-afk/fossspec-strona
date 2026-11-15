@@ -86,8 +86,10 @@ app.use("/api/threads", threadRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api", authRoutes);
 
-// Obsługa nieznanych zapytań pod /api -> zwraca JSON z błędem 404
-app.use("/api/(.*)?", notFound);
+// Jeśli żądanie zaczyna się od /api i nie trafiło w żadną powyższą trasę -> zwraca 404
+app.use("/api", (req, res, next) => {
+    notFound(req, res, next);
+});
 
 // Fallback dla wszystkich pozostałych adresów URL (serwuje front-end SPA)
 app.get("*", (req, res) => {
@@ -96,5 +98,3 @@ app.get("*", (req, res) => {
 
 // Globalna obsługa błędów
 app.use(errorHandler);
-
-module.exports = app;
