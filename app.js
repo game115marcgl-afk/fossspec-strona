@@ -86,10 +86,10 @@ app.use("/api/threads", threadRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api", authRoutes);
 
-// Jeśli zapytanie pod /api nie istnieje -> zwróć 404 z middleware
-app.use("/api/*", notFound);
+// Obsługa nieznanych zapytań pod /api -> zwraca JSON z błędem 404
+app.use("/api/(.*)?", notFound);
 
-// Fallback dla wszystkich pozostałych adresów URL (eliminuje błędy 404 na podstronach)
+// Fallback dla wszystkich pozostałych adresów URL (serwuje front-end SPA)
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
