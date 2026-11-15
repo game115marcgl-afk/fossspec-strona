@@ -3,19 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forum FossSpec</title>
+<title>FossSpec // Forum Techniczne</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     :root {
-      --bg: #121212;
-      --card: #1E1E1E;
-      --card-hover: #252525;
-      --text-primary: #E0E0E0;
-      --text-secondary: #A0A0A0;
-      --accent: #00E676;
-      --accent-dim: #00C766;
-      --border: #2A2A2A;
-      --danger: #ff5252;
+      --bg: #0d1117; /* Głęboki grafit w stylu GitHub Dark / Terminal */
+      --card: #161b22;
+      --card-hover: #1f6feb10;
+      --text-primary: #c9d1d9;
+      --text-secondary: #8b949e;
+      --accent: #2ea043; /* Developer green */
+      --accent-dim: #238636;
+      --border: #30363d;
+      --danger: #f85149;
+      --font-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
     }
 
     * {
@@ -41,7 +42,7 @@
     header {
       background: var(--card);
       border-bottom: 1px solid var(--border);
-      padding: 14px 24px;
+      padding: 12px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -50,58 +51,56 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      box-shadow: 0 4px 18px rgba(0,0,0,.18);
     }
 
     .logo {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      font-family: var(--font-mono);
       color: var(--accent);
-    }
-
-    .logo span {
-      font-weight: 700;
-      font-size: 1.25rem;
+      font-size: 1rem;
+      font-weight: 600;
     }
 
     .user-bar {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: .9rem;
+      gap: 12px;
+      font-size: .85rem;
+      font-family: var(--font-mono);
     }
 
     .btn {
-      padding: 9px 18px;
-      border-radius: 7px;
-      font-size: .9rem;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: .85rem;
       font-weight: 600;
       cursor: pointer;
-      border: none;
-      transition: .2s ease;
+      border: 1px solid transparent;
+      transition: .15s ease;
+      font-family: inherit;
     }
 
     .btn-outline {
       background: transparent;
       color: var(--text-primary);
-      border: 1px solid var(--border);
+      border-color: var(--border);
     }
 
     .btn-outline:hover {
       border-color: var(--accent);
       color: var(--accent);
+      background: rgba(46, 160, 67, 0.05);
     }
 
     .btn-fill {
       background: var(--accent);
-      color: #080808;
-      box-shadow: 0 4px 14px rgba(0,230,118,.14);
+      color: #ffffff;
     }
 
     .btn-fill:hover {
       background: var(--accent-dim);
-      transform: translateY(-1px);
     }
 
     .btn-danger {
@@ -110,11 +109,11 @@
     }
 
     .btn-danger:hover {
-      background: #e04848;
+      background: #da3633;
     }
 
     main {
-      max-width: 1000px;
+      max-width: 960px;
       margin: 0 auto;
       padding: 32px 20px 60px;
     }
@@ -123,22 +122,28 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
       flex-wrap: wrap;
       gap: 12px;
     }
 
     .section-top h1 {
-      font-size: 1.4rem;
-      font-weight: 700;
+      font-size: 1.25rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+
+    .section-top h1::before {
+      content: "$ ";
+      color: var(--accent);
     }
 
     .card {
       background: var(--card);
-      border-radius: 10px;
+      border-radius: 6px;
       border: 1px solid var(--border);
       overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0,0,0,.12);
     }
 
     .thread-row {
@@ -146,10 +151,10 @@
       justify-content: space-between;
       align-items: center;
       gap: 16px;
-      padding: 19px 20px;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--border);
       cursor: pointer;
-      transition: background .2s ease, border-color .2s ease;
+      transition: background .15s ease;
     }
 
     .thread-row:last-child {
@@ -157,36 +162,38 @@
     }
 
     .thread-row:hover {
-      background: var(--card-hover);
-      border-left: 3px solid var(--accent);
-      padding-left: 17px;
+      background: rgba(255, 255, 255, 0.02);
     }
 
     .badge {
-      background: rgba(0,230,118,.15);
+      background: rgba(46, 160, 67, 0.15);
       color: var(--accent);
-      padding: 3px 10px;
-      border-radius: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
       font-size: .75rem;
-      font-weight: 600;
+      font-family: var(--font-mono);
+      font-weight: 500;
       margin-right: 8px;
       display: inline-block;
+      border: 1px solid rgba(46, 160, 67, 0.3);
     }
 
     .thread-title {
       color: var(--text-primary);
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 600;
     }
 
     .thread-title:hover {
       color: var(--accent);
+      text-decoration: underline;
     }
 
     .meta {
       color: var(--text-secondary);
-      font-size: .85rem;
-      margin-top: 6px;
+      font-size: .8rem;
+      margin-top: 4px;
+      font-family: var(--font-mono);
     }
 
     .meta strong {
@@ -194,16 +201,18 @@
     }
 
     .empty-state {
-      padding: 38px 20px;
+      padding: 40px 20px;
       color: var(--text-secondary);
       text-align: center;
+      font-family: var(--font-mono);
+      font-size: .9rem;
     }
 
     .modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.82);
+      background: rgba(1, 4, 9, 0.8);
       justify-content: center;
       align-items: center;
       z-index: 1000;
@@ -212,30 +221,36 @@
 
     .modal-content {
       background: var(--card);
-      padding: 28px;
-      border-radius: 10px;
+      padding: 24px;
+      border-radius: 8px;
       width: 100%;
       max-width: 480px;
       border: 1px solid var(--border);
-      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
     }
 
     .modal-content h2 {
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      font-size: 1.1rem;
+      font-family: var(--font-mono);
+    }
+
+    .modal-content h2::before {
+      content: "> ";
       color: var(--accent);
-      margin-bottom: 18px;
-      font-size: 1.2rem;
     }
 
     input,
     select,
     textarea {
       width: 100%;
-      padding: 11px 12px;
+      padding: 10px 12px;
       margin-bottom: 14px;
       background: var(--bg);
       border: 1px solid var(--border);
       color: var(--text-primary);
-      border-radius: 7px;
+      border-radius: 6px;
       font-size: .9rem;
       font-family: inherit;
     }
@@ -243,8 +258,9 @@
     input:focus,
     select:focus,
     textarea:focus {
-      outline: 2px solid var(--accent);
+      outline: none;
       border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(46, 160, 67, 0.15);
     }
 
     .modal-actions {
@@ -255,28 +271,17 @@
 
     @media (max-width: 640px) {
       header {
-        padding: 12px 16px;
+        padding: 10px 16px;
       }
-
       main {
-        padding: 24px 14px 50px;
+        padding: 20px 12px 40px;
       }
-
-      .section-top {
-        align-items: flex-start;
-      }
-
-      .section-top .btn {
-        width: 100%;
-      }
-
       .thread-row {
         flex-direction: column;
         align-items: flex-start;
       }
-
-      .user-bar {
-        gap: 6px;
+      .section-top .btn {
+        width: 100%;
       }
     }
   </style>
@@ -285,36 +290,36 @@
 
 <header>
   <div class="logo">
-    <span>💬 Forum FossSpec</span>
+    <span>fossspec@forum:~$</span>
   </div>
   <div id="userBar" class="user-bar">
-    <span style="color: var(--text-secondary);">Ładowanie...</span>
+    <span style="color: var(--text-secondary);">[ inicjalizuj sesję... ]</span>
   </div>
 </header>
 
 <main>
   <div class="section-top">
-    <h1>Dyskusje i Tematy</h1>
-    <button id="newThreadBtn" class="btn btn-fill"><i class="fas fa-plus"></i> Załóż Nowy Wątek</button>
+    <h1>dyskusje.log</h1>
+    <button id="newThreadBtn" class="btn btn-fill"><i class="fas fa-plus"></i> Nowy Wątek</button>
   </div>
 
   <div id="threadsContainer" class="card">
-    <p class="empty-state">Ładowanie wątków...</p>
+    <p class="empty-state">Pobieranie bufora wątków...</p>
   </div>
 </main>
 
 <div id="threadModal" class="modal">
   <div class="modal-content">
-    <h2>Stwórz Nowy Wątek</h2>
+    <h2>Utwórz Nowy Wpis</h2>
     <form id="createThreadForm">
       <input type="text" id="title" placeholder="Tytuł wątku" maxlength="150" required>
       <select id="category" required>
         <option value="" disabled selected>Wybierz kategorię...</option>
       </select>
-      <textarea id="content" rows="5" placeholder="Treść wątku / Pytanie..." maxlength="10000" required></textarea>
+      <textarea id="content" rows="5" placeholder="Treść / Opis problemu..." maxlength="10000" required></textarea>
       <div class="modal-actions">
         <button type="button" id="cancelModalBtn" class="btn btn-outline">Anuluj</button>
-        <button type="submit" class="btn btn-fill">Opublikuj</button>
+        <button type="submit" class="btn btn-fill">Wyślij do bufora</button>
       </div>
     </form>
   </div>
