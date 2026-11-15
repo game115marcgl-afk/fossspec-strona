@@ -111,7 +111,29 @@ async function loadThreads() {
     }
 }
 
-function handleThreadsContainerClick(e) {
+async function handleThreadsContainerClick(e) {
+    const deleteBtn = e.target.closest('.delete-thread-btn');
+    if (deleteBtn) {
+        e.stopPropagation();
+        const threadId = deleteBtn.dataset.id;
+        
+        if (confirm('[?] Czy na pewno chcesz trwale usunąć ten wątek?')) {
+            try {
+                const res = await fetch(`/api/threads/${threadId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (res.ok) {
+                    loadThreads();
+                } else {
+                    alert(data.message || 'Nie udało się usunąć wątku.');
+                }
+            } catch (err) {
+                console.error('Błąd sieci:', err);
+                alert('Wystąpił błąd podczas usuwania wątku.');
+            }
+        }
+        return;
+    }
+
     if (e.target.closest('a')) return;
     const row = e.target.closest('.thread-row');
     if (row) window.location.href = `/thread.html?id=${row.dataset.id}`;
