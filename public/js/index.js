@@ -11,7 +11,6 @@ async function checkUser() {
 
         if (data.loggedIn) {
             currentUser = data.user;
-            // Dodano klasę badge-admin przy nazwie użytkownika w nagłówku, jeśli ma rolę admin
             const userRoleBadge = data.user.role === 'admin' ? '<span class="badge-admin">[admin]</span>' : '';
             userBar.innerHTML = `
                 <span>Witaj, <strong>${escapeHtml(data.user.username)}</strong>${userRoleBadge}</span>
@@ -51,9 +50,29 @@ async function loadCategories() {
 
 async function loadThreads() {
     try {
-        const res = await fetch('/api/threads');
-        const threads = await res.json();
         const container = document.getElementById('threadsContainer');
+
+        if (!currentUser) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <p>[!] Dostęp ograniczony. Musisz się zalogować, aby przeglądać bufor dyskusji.</p>
+                    <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                        <a href="/login.html" class="btn btn-outline" style="display: inline-block;">Zaloguj</a>
+                        <a href="/register.html" class="btn btn-fill" style="display: inline-block;">Zarejestruj</a>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        const res = await fetch('/api/threads');
+        
+        if (res.status === 401) {
+            container.innerHTML = '<p class="empty-state">Sesja wygasła. Zaloguj się ponownie.</p>';
+            return;
+        }
+
+        const threads = await res.json();
 
         if (threads.length === 0) {
             container.innerHTML = '<p class="empty-state">Brak wątków na forum. Bądź pierwszy i załóż nowy wątek!</p>';
@@ -62,7 +81,6 @@ async function loadThreads() {
 
         container.innerHTML = threads.map(t => {
             const authorName = t.author?.username || 'Nieznany';
-            // Sprawdzamy czy autor wątku posiada rolę administratora
             const authorRole = t.author?.role === 'admin' ? '<span class="badge-admin">[admin]</span>' : '';
             const categoryName = t.category?.name || 'Bez kategorii';
             const date = new Date(t.createdAt);
