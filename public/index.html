@@ -52,7 +52,6 @@ async function loadThreads() {
     try {
         const container = document.getElementById('threadsContainer');
 
-        // Blokada widoku dla niezalogowanych gości
         if (!currentUser) {
             container.innerHTML = `
                 <div class="empty-state">
@@ -174,3 +173,4 @@ function setupStaticListeners() {
     await loadCategories();
     await loadThreads();
 })();
+<script src="/js/index.js"></script>
