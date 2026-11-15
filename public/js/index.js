@@ -6,6 +6,7 @@ let categories = [];
 async function checkUser() {
     try {
         const res = await fetch('/api/me');
+        if (!res.ok) throw new Error('Błąd autoryzacji');
         const data = await res.json();
         const userBar = document.getElementById('userBar');
         if (!userBar) return;
@@ -18,9 +19,7 @@ async function checkUser() {
                 <button id="logoutBtn" class="btn btn-danger">Wyloguj</button>
             `;
             const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', logout);
-            }
+            if (logoutBtn) logoutBtn.addEventListener('click', logout);
         } else {
             userBar.innerHTML = `
                 <a href="/login.html" class="btn btn-outline">Zaloguj</a>
@@ -28,7 +27,16 @@ async function checkUser() {
             `;
         }
     } catch (err) {
-        console.error("Błąd sprawdzania użytkownika:", err);
+        console.warn("Użytkownik niezalogowany lub problem z API /api/me:", err);
+        // Ustaw domyślny stan dla gościa, żeby ładowanie ruszyło dalej!
+        currentUser = null;
+        const userBar = document.getElementById('userBar');
+        if (userBar) {
+            userBar.innerHTML = `
+                <a href="/login.html" class="btn btn-outline">Zaloguj</a>
+                <a href="/register.html" class="btn btn-fill">Zarejestruj</a>
+            `;
+        }
     }
 }
 
