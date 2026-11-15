@@ -10,6 +10,21 @@ const { logActivity } = require("../middleware/activityLogger");
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const register = asyncHandler(async (req, res, next) => {
+    // === ZABEZPIECZENIA PRZED BOTAMI ===
+    
+    // 1. Pułapka Honeypot: jeśli ukryte pole "website" zostało wypełnione, to automat
+    if (req.body.website) {
+        return res.status(201).json({ success: true, message: "Konto utworzone!" });
+    }
+
+    // 2. Time-Trap: weryfikacja czasu (jeśli formularz wysłano w mniej niż 2.5 sekundy)
+    const formLoadTime = req.body.formLoadTime;
+    if (!formLoadTime || (Date.now() - formLoadTime < 2500)) {
+        return next(new AppError("Zbyt szybkie przesłanie formularza. Spróbuj ponownie.", 400));
+    }
+
+    // ===================================
+
     const username = ensureString(req.body.username);
     const email = ensureString(req.body.email)?.toLowerCase();
     const password = ensureString(req.body.password);
