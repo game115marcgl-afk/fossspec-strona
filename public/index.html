@@ -4,14 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FossSpec // Terminal Forum</title>
-    <!-- Bewzględny ukośnik zapobiega gubieniu ścieżki -->
+    <!-- Styl terminalowy (zgodny z polityką CSP dla stylów) -->
     <link rel="stylesheet" href="/css/style.css">
+    <!-- Ikony FontAwesome (dozwolone w CSP img/style) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Treść strony -->
+    <header>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1><a href="/" style="color: var(--accent); text-decoration: none;">FossSpec //</a></h1>
+            <!-- Dynamiczny pasek sesji i użytkownika obsługiwany przez index.js -->
+            <div id="userBar"></div>
+        </div>
+    </header>
 
-    <!-- Skrypt musi też iść z korzenia -->
+    <main>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Bufor Dyskusji</h2>
+            <!-- Przycisk inicjujący modal (zabezpieczony weryfikacją sesji) -->
+            <button id="newThreadBtn" class="btn btn-fill"><i class="fas fa-plus"></i> Nowy Wątek</button>
+        </div>
+
+        <!-- Główny kontener wątków (chroniony przed dostępem niezalogowanych gości) -->
+        <div id="threadsContainer">
+            <p class="empty-state">Inicjalizacja bufora...</p>
+        </div>
+    </main>
+
+    <!-- Okno modalne do tworzenia nowego wątku (ukryte domyślnie w CSS) -->
+    <div id="threadModal">
+        <form id="createThreadForm">
+            <h3>[+] Utwórz nowy wątek</h3>
+            <div>
+                <label for="title">Tytuł:</label>
+                <input type="text" id="title" required placeholder="Wpisz tytuł wątku..." autocomplete="off">
+            </div>
+            <div>
+                <label for="category">Kategoria:</label>
+                <select id="category" required>
+                    <option value="" disabled selected>Ładowanie kategorii...</option>
+                </select>
+            </div>
+            <div>
+                <label for="content">Treść:</label>
+                <textarea id="content" rows="6" required placeholder="Wpisz treść..."></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button type="button" id="cancelModalBtn" class="btn btn-danger">Anuluj</button>
+                <button type="submit" class="btn btn-fill">Wyślij</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Zewnętrzny skrypt frontendowy (cała logika i zabezpieczenie escapeHtml) -->
     <script src="/js/index.js"></script>
 </body>
 </html>
