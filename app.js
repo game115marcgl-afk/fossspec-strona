@@ -79,16 +79,15 @@ app.use("/api/login", authLimiter);
 
 // Serwowanie plików statycznych z katalogu public
 app.use(express.static(path.join(__dirname, "public")));
-
 // Trasy API
 app.use("/api/categories", categoryRoutes);
 app.use("/api/threads", threadRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api", authRoutes);
 
-// Jeśli żądanie zaczyna się od /api i nie trafiło w żadną powyższą trasę -> zwraca 404
+// Wszystko pod /api, co nie zostało obsłużone wyżej -> zwraca 404 dla API (bez regexów!)
 app.use("/api", (req, res, next) => {
-    notFound(req, res, next);
+    res.status(404).json({ success: false, message: "Nie znaleziono endpointu API." });
 });
 
 // Fallback dla wszystkich pozostałych adresów URL (serwuje front-end SPA)
@@ -98,3 +97,6 @@ app.get("*", (req, res) => {
 
 // Globalna obsługa błędów
 app.use(errorHandler);
+
+
+
